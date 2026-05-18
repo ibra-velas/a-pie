@@ -12,6 +12,7 @@ export const PILL_GROUPS = [
       { id: 'cafe',          label: 'Cafés' },
       { id: 'comida_rapida', label: 'Comida rápida' },
       { id: 'panaderia',     label: 'Panaderías' },
+      { id: 'heladeria',     label: 'Heladerías' },
       { id: 'carniceria',    label: 'Carnicerías' },
       { id: 'fruteria',      label: 'Fruterías' },
       { id: 'pescaderia',    label: 'Pescaderías' },

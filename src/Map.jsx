@@ -17,6 +17,7 @@ const SUBCATEGORY_ICONS = {
   cafe:          '☕',
   comida_rapida: '🍔',
   panaderia:     '🥖',
+  heladeria:     '🍦',
   carniceria:    '🥩',
   fruteria:      '🍎',
   pescaderia:    '🐟',
@@ -87,21 +88,33 @@ export default function Map({ origin, isochrone, resources, selected, onSelect }
   const isoLayer = useRef(null)
   const markerLayer = useRef(null)
   const originMarker = useRef(null)
+  const lineLayer = useRef(null)
 
   useEffect(() => {
     leaflet.current = L.map(mapRef.current).setView([28.485, -16.320], 12)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       attribution: '© OpenStreetMap © CARTO · Datos: Cabildo de Tenerife',
     }).addTo(leaflet.current)
+    leaflet.current.createPane('linePane').style.zIndex = 450
+    leaflet.current.createPane('originPane').style.zIndex = 620
     return () => leaflet.current.remove()
   }, [])
 
   useEffect(() => {
     if (!origin) return
     originMarker.current?.remove()
-    originMarker.current = L.circleMarker([origin.lat, origin.lon], {
-      radius: 9, color: '#fff', weight: 3, fillColor: '#185FA5', fillOpacity: 1,
-      className: 'origin-marker',
+    originMarker.current = L.marker([origin.lat, origin.lon], {
+      icon: L.divIcon({
+        className: '',
+        html: `<div style="position:relative;width:24px;height:24px;">
+          <div class="origin-ring"></div>
+          <div class="origin-dot"></div>
+        </div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+      }),
+      pane: 'originPane',
+      interactive: false,
     }).addTo(leaflet.current)
   }, [origin])
 
@@ -113,6 +126,18 @@ export default function Map({ origin, isochrone, resources, selected, onSelect }
     }).addTo(leaflet.current)
     leaflet.current.fitBounds(isoLayer.current.getBounds(), { padding: [40, 40] })
   }, [isochrone])
+
+  useEffect(() => {
+    lineLayer.current?.remove()
+    lineLayer.current = null
+    if (selected && origin) {
+      const [lon, lat] = selected.location.coordinates
+      lineLayer.current = L.polyline(
+        [[origin.lat, origin.lon], [lat, lon]],
+        { color: '#185FA5', weight: 2, opacity: 0.9, dashArray: '8, 8', className: 'marching-line', pane: 'linePane' }
+      ).addTo(leaflet.current)
+    }
+  }, [selected, origin])
 
   useEffect(() => {
     if (!markerLayer.current) {

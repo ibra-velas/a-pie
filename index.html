@@ -5,6 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Accesibilidad Tenerife</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+      @keyframes march {
+        to { stroke-dashoffset: -16; }
+      }
+      .marching-line {
+        animation: march 0.6s linear infinite;
+      }
+      @keyframes origin-pulse {
+        0%   { transform: scale(0.4); opacity: 0.7; }
+        100% { transform: scale(2.4); opacity: 0; }
+      }
+      .origin-ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: #185FA5;
+        animation: origin-pulse 1.8s ease-out infinite;
+      }
+      .origin-dot {
+        position: absolute;
+        inset: 4px;
+        border-radius: 50%;
+        background: #185FA5;
+        border: 2.5px solid white;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.35);
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

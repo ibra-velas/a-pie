@@ -32,6 +32,7 @@ OSM_SOURCES = [
     ("amenity", "cafe",           "ocio",       "cafe"),
     ("amenity", "bar",            "ocio",       "bar"),
     ("amenity", "fast_food",      "ocio",       "comida_rapida"),
+    ("amenity", "ice_cream",      "comercio",   "heladeria"),
     # ocio – deporte
     ("leisure", "sports_centre",  "ocio",       "deportes"),
     ("leisure", "swimming_pool",  "ocio",       "piscina"),
