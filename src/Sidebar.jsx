@@ -87,7 +87,7 @@ const CITIES = [
   { label: 'El Médano',          lat: 28.0462, lon: -16.5384 },  // Playa El Médano
   // Este
   { label: 'Güímar',             lat: 28.3103, lon: -16.4093 },  // Plaza de la Candelaria
-  { label: 'Puertito de Güímar', lat: 28.2858, lon: -16.3947 },  // Puerto pesquero
+  { label: 'Puertito de Güímar', lat: 28.2847, lon: -16.3962 },  // Plaza de las Indias
   { label: 'Candelaria',         lat: 28.3580, lon: -16.3727 },  // Basílica
   { label: 'Arafo',              lat: 28.3336, lon: -16.3924 },  // Plaza de San Juan
   // Área Metropolitana – barrios
