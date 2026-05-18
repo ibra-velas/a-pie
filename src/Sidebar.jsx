@@ -8,9 +8,38 @@ const CATEGORIES = [
   { id: 'transporte', label: 'Transporte' },
 ]
 
-export default function Sidebar({ isMobile, onSearch, minutes, onMinutesChange, resources, selected, onSelect, loading, error }) {
+export default function Sidebar({ isMobile, onSearch, onLocate, minutes, onMinutesChange, resources, selected, onSelect, loading, error }) {
   const [address, setAddress] = useState('')
+  const [locating, setLocating] = useState(false)
   const [activeCats, setActiveCats] = useState(['salud', 'educacion', 'ocio', 'transporte'])
+
+  async function handleLocate() {
+    if (!navigator.geolocation) return
+    setLocating(true)
+    navigator.geolocation.getCurrentPosition(
+      async ({ coords }) => {
+        const { latitude: lat, longitude: lon } = coords
+        // Reverse-geocode for a human-readable label
+        try {
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+            { headers: { 'Accept-Language': 'es' } }
+          )
+          const data = await res.json()
+          const a = data.address ?? {}
+          const street = [a.road, a.house_number].filter(Boolean).join(' ')
+          const city = a.city ?? a.town ?? a.village ?? a.municipality ?? ''
+          setAddress([street, city].filter(Boolean).join(', '))
+        } catch {
+          setAddress(`${lat.toFixed(5)}, ${lon.toFixed(5)}`)
+        }
+        onLocate(lat, lon)
+        setLocating(false)
+      },
+      () => setLocating(false),
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
 
   const toggleCat = id =>
     setActiveCats(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])
@@ -32,6 +61,14 @@ export default function Sidebar({ isMobile, onSearch, minutes, onMinutesChange, 
         {!isMobile && <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>Accesibilidad Tenerife</div>}
 
         <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+          <button
+            onClick={handleLocate}
+            disabled={locating || loading}
+            title="Usar mi ubicación"
+            style={{ padding: '7px 10px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 8, cursor: 'pointer', fontSize: 15, flexShrink: 0 }}
+          >
+            {locating ? '⏳' : '📍'}
+          </button>
           <input
             value={address}
             onChange={e => setAddress(e.target.value)}

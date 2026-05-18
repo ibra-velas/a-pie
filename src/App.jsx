@@ -30,6 +30,19 @@ export default function App() {
     }
   }
 
+  async function locate(lat, lon) {
+    setLoading(true)
+    setError(null)
+    try {
+      setOrigin({ lat, lon })
+      await fetchResources(lat, lon, minutes)
+    } catch {
+      setError('Error de conexión')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function fetchResources(lat, lon, mins) {
     const res = await fetch(`/api/resources?lat=${lat}&lon=${lon}&minutes=${mins}`)
     if (!res.ok) { setError('Error cargando recursos'); return }
@@ -53,6 +66,7 @@ export default function App() {
       <Sidebar
         isMobile={isMobile}
         onSearch={search}
+        onLocate={locate}
         minutes={minutes}
         onMinutesChange={setMinutes}
         resources={resources}
