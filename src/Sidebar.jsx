@@ -8,7 +8,7 @@ const CATEGORIES = [
   { id: 'transporte', label: 'Transporte' },
 ]
 
-export default function Sidebar({ onSearch, minutes, onMinutesChange, resources, selected, onSelect, loading, error }) {
+export default function Sidebar({ isMobile, onSearch, minutes, onMinutesChange, resources, selected, onSelect, loading, error }) {
   const [address, setAddress] = useState('')
   const [activeCats, setActiveCats] = useState(['salud', 'educacion', 'ocio', 'transporte'])
 
@@ -18,9 +18,18 @@ export default function Sidebar({ onSearch, minutes, onMinutesChange, resources,
   const totalCount = Object.values(resources).flat().length
 
   return (
-    <div style={{ width: 300, display: 'flex', flexDirection: 'column', borderRight: '1px solid #e5e7eb', background: '#fff', overflow: 'hidden' }}>
-      <div style={{ padding: 16, borderBottom: '1px solid #e5e7eb' }}>
-        <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>Accesibilidad Tenerife</div>
+    <div style={{
+      width: isMobile ? '100%' : 300,
+      maxHeight: isMobile ? '45vh' : 'none',
+      display: 'flex',
+      flexDirection: 'column',
+      borderRight: isMobile ? 'none' : '1px solid #e5e7eb',
+      borderBottom: isMobile ? '1px solid #e5e7eb' : 'none',
+      background: '#fff',
+      overflow: 'hidden',
+    }}>
+      <div style={{ padding: isMobile ? '10px 14px' : 16, borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
+        {!isMobile && <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>Accesibilidad Tenerife</div>}
 
         <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
           <input

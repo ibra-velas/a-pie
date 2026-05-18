@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Map from './Map'
 import Sidebar from './Sidebar'
+import useIsMobile from './useIsMobile'
 
 export default function App() {
   const [origin, setOrigin] = useState(null)
@@ -11,6 +12,7 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const debounceRef = useRef(null)
+  const isMobile = useIsMobile()
 
   async function search(address) {
     setLoading(true)
@@ -47,8 +49,9 @@ export default function App() {
   }, [minutes])
 
   return (
-    <div style={{ display: 'flex', height: '100vh', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', fontFamily: 'system-ui, sans-serif' }}>
       <Sidebar
+        isMobile={isMobile}
         onSearch={search}
         minutes={minutes}
         onMinutesChange={setMinutes}
