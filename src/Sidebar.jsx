@@ -237,21 +237,39 @@ export default function Sidebar({
             <div style={{ fontSize: 11, fontWeight: 600, color, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
               {label} · {items.length}
             </div>
-            {items.map(item => (
-              <div key={item.id} onClick={() => onSelect(item)} style={{
-                display: 'flex', alignItems: 'center', gap: 10,
-                padding: '7px 8px', borderRadius: 8, cursor: 'pointer',
-                background: selected?.id === item.id ? '#EFF6FF' : 'transparent',
-                marginBottom: 2,
-              }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: CATEGORY_COLORS[item.category] ?? color, flexShrink: 0 }} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
-                  <div style={{ fontSize: 11, color: '#9ca3af' }}>{item.address || item.subcategory}</div>
+            {items.map(item => {
+              const [lon, lat] = item.location.coordinates
+              const mapsUrl = `https://www.google.com/maps?q=${lat},${lon}`
+              const isSelected = selected?.id === item.id
+              return (
+                <div key={item.id}>
+                  <div onClick={() => onSelect(item)} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '7px 8px', borderRadius: isSelected ? '8px 8px 0 0' : 8,
+                    cursor: 'pointer',
+                    background: isSelected ? '#EFF6FF' : 'transparent',
+                    marginBottom: isSelected ? 0 : 2,
+                  }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: CATEGORY_COLORS[item.category] ?? color, flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+                      <div style={{ fontSize: 11, color: '#9ca3af' }}>{item.address || item.subcategory}</div>
+                    </div>
+                    <div style={{ fontSize: 12, color: '#9ca3af', flexShrink: 0 }}>{item.distance_m}m</div>
+                  </div>
+                  {isSelected && (
+                    <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
+                      display: 'block', padding: '5px 8px 7px',
+                      background: '#EFF6FF', borderRadius: '0 0 8px 8px',
+                      fontSize: 12, color: '#185FA5', textDecoration: 'none',
+                      marginBottom: 2,
+                    }}>
+                      📍 Ver en Google Maps →
+                    </a>
+                  )}
                 </div>
-                <div style={{ fontSize: 12, color: '#9ca3af', flexShrink: 0 }}>{item.distance_m}m</div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ))}
       </div>
