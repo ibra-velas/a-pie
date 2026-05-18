@@ -87,8 +87,12 @@ const CITIES = [
   { label: 'El Médano',          lat: 28.0462, lon: -16.5384 },  // Playa El Médano
   // Este
   { label: 'Güímar',             lat: 28.3103, lon: -16.4093 },  // Plaza de la Candelaria
+  { label: 'Puertito de Güímar', lat: 28.2858, lon: -16.3947 },  // Puerto pesquero
   { label: 'Candelaria',         lat: 28.3580, lon: -16.3727 },  // Basílica
   { label: 'Arafo',              lat: 28.3336, lon: -16.3924 },  // Plaza de San Juan
+  // Área Metropolitana – barrios
+  { label: 'San Andrés',         lat: 28.5118, lon: -16.2024 },  // Las Teresitas
+  { label: 'La Cuesta',          lat: 28.4700, lon: -16.2900 },  // Centro La Cuesta
 ]
 
 export default function Sidebar({
