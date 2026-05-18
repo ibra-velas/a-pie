@@ -10,10 +10,17 @@ const CATEGORIES = [
   { id: 'transporte', label: 'Transporte' },
 ]
 
-export default function Sidebar({ isMobile, onSearch, onLocate, minutes, onMinutesChange, resources, selected, onSelect, loading, error }) {
+const CITIES = ['Santa Cruz', 'La Laguna', 'Puerto de la Cruz', 'Candelaria', 'Los Cristianos']
+
+export default function Sidebar({
+  isMobile, onSearch, onLocate,
+  minutes, onMinutesChange,
+  resources, allResources, activeCats, onToggleCat,
+  selected, onSelect,
+  loading, error,
+}) {
   const [address, setAddress] = useState('')
   const [locating, setLocating] = useState(false)
-  const [activeCats, setActiveCats] = useState(['salud', 'educacion', 'ocio', 'comercio', 'cultura', 'transporte'])
 
   async function handleLocate() {
     if (!navigator.geolocation) return
@@ -21,7 +28,6 @@ export default function Sidebar({ isMobile, onSearch, onLocate, minutes, onMinut
     navigator.geolocation.getCurrentPosition(
       async ({ coords }) => {
         const { latitude: lat, longitude: lon } = coords
-        // Reverse-geocode for a human-readable label
         try {
           const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
@@ -43,10 +49,10 @@ export default function Sidebar({ isMobile, onSearch, onLocate, minutes, onMinut
     )
   }
 
-  const toggleCat = id =>
-    setActiveCats(prev => prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id])
-
-  const totalCount = Object.values(resources).flat().length
+  // Count only active-category resources
+  const filteredCount = Object.values(resources).flat().length
+  // Total across all categories (for the "X of Y" hint)
+  const totalCount = Object.values(allResources ?? {}).flat().length
 
   return (
     <div style={{
@@ -59,10 +65,13 @@ export default function Sidebar({ isMobile, onSearch, onLocate, minutes, onMinut
       background: '#fff',
       overflow: 'hidden',
     }}>
+
+      {/* ── Controls ── */}
       <div style={{ padding: isMobile ? '10px 14px' : 16, borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
         {!isMobile && <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>Accesibilidad Tenerife</div>}
 
-        <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+        {/* Search row */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
           <button
             onClick={handleLocate}
             disabled={locating || loading}
@@ -87,17 +96,14 @@ export default function Sidebar({ isMobile, onSearch, onLocate, minutes, onMinut
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 10 }}>
-          {['Santa Cruz', 'La Laguna', 'Puerto de la Cruz', 'Candelaria', 'Los Cristianos'].map(city => (
+        {/* City shortcuts */}
+        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 8 }}>
+          {CITIES.map(city => (
             <button
               key={city}
               onClick={() => { setAddress(city); onSearch(city) }}
               disabled={loading}
-              style={{
-                fontSize: 11, padding: '3px 9px', borderRadius: 99,
-                border: '1px solid #d1d5db', background: '#f9fafb',
-                color: '#374151', cursor: 'pointer',
-              }}
+              style={{ fontSize: 11, padding: '3px 9px', borderRadius: 99, border: '1px solid #d1d5db', background: '#f9fafb', color: '#374151', cursor: 'pointer' }}
             >
               {city}
             </button>
@@ -106,7 +112,8 @@ export default function Sidebar({ isMobile, onSearch, onLocate, minutes, onMinut
 
         {error && <div style={{ fontSize: 12, color: '#D85A30', marginBottom: 8 }}>{error}</div>}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        {/* Minute slider */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
           <span style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>{minutes} min a pie</span>
           <input
             type="range" min="5" max="30" step="5"
@@ -116,37 +123,44 @@ export default function Sidebar({ isMobile, onSearch, onLocate, minutes, onMinut
           />
         </div>
 
+        {/* Category filter pills */}
         <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
           {CATEGORIES.map(cat => {
             const active = activeCats.includes(cat.id)
             const color = CATEGORY_COLORS[cat.id]
+            const count = (allResources?.[cat.id] ?? []).length
             return (
-              <button key={cat.id} onClick={() => toggleCat(cat.id)} style={{
+              <button key={cat.id} onClick={() => onToggleCat(cat.id)} style={{
                 fontSize: 11, padding: '3px 10px', borderRadius: 99,
                 border: `1px solid ${active ? color : '#d1d5db'}`,
                 background: active ? color + '22' : 'transparent',
                 color: active ? color : '#9ca3af',
                 cursor: 'pointer',
+                opacity: count === 0 ? 0.4 : 1,
               }}>
-                {cat.label}
+                {cat.label}{count > 0 ? ` ${count}` : ''}
               </button>
             )
           })}
         </div>
       </div>
 
+      {/* ── Results list ── */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '10px 14px' }}>
         {totalCount > 0 && (
           <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>
-            {totalCount} recursos en {minutes} min a pie
+            {filteredCount === totalCount
+              ? `${totalCount} recursos en ${minutes} min a pie`
+              : `${filteredCount} de ${totalCount} recursos · ${minutes} min a pie`}
           </div>
         )}
+
         {CATEGORIES.filter(c => activeCats.includes(c.id)).map(cat => {
           const items = resources[cat.id]
           if (!items?.length) return null
           return (
             <div key={cat.id} style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: CATEGORY_COLORS[cat.id], textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
                 {cat.label} · {items.length}
               </div>
               {items.map(item => (

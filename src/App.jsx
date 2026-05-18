@@ -3,6 +3,8 @@ import Map from './Map'
 import Sidebar from './Sidebar'
 import useIsMobile from './useIsMobile'
 
+const ALL_CATS = ['salud', 'educacion', 'ocio', 'comercio', 'cultura', 'transporte']
+
 export default function App() {
   const [origin, setOrigin] = useState(null)
   const [minutes, setMinutes] = useState(10)
@@ -11,8 +13,20 @@ export default function App() {
   const [selected, setSelected] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [activeCats, setActiveCats] = useState(ALL_CATS)
   const debounceRef = useRef(null)
   const isMobile = useIsMobile()
+
+  function toggleCat(id) {
+    setActiveCats(prev =>
+      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+    )
+  }
+
+  // Derive filtered resources from the full set + active cats
+  const filteredResources = Object.fromEntries(
+    Object.entries(resources).filter(([cat]) => activeCats.includes(cat))
+  )
 
   async function search(address) {
     setLoading(true)
@@ -69,7 +83,10 @@ export default function App() {
         onLocate={locate}
         minutes={minutes}
         onMinutesChange={setMinutes}
-        resources={resources}
+        resources={filteredResources}
+        allResources={resources}
+        activeCats={activeCats}
+        onToggleCat={toggleCat}
         selected={selected}
         onSelect={setSelected}
         loading={loading}
@@ -78,7 +95,7 @@ export default function App() {
       <Map
         origin={origin}
         isochrone={isochrone}
-        resources={resources}
+        resources={filteredResources}
         selected={selected}
         onSelect={setSelected}
       />
