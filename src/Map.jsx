@@ -1,5 +1,7 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
+import CompassButton from './CompassButton'
+import NorthIndicator from './NorthIndicator'
 
 export const CATEGORY_COLORS = {
   salud:      '#D85A30',
@@ -10,10 +12,12 @@ export const CATEGORY_COLORS = {
 
 export default function Map({ origin, isochrone, resources, selected, onSelect }) {
   const mapRef = useRef(null)
+  const containerRef = useRef(null)
   const leaflet = useRef(null)
   const isoLayer = useRef(null)
   const markerLayer = useRef(null)
   const originMarker = useRef(null)
+  const [bearing, setBearing] = useState(0)
 
   useEffect(() => {
     leaflet.current = L.map(mapRef.current).setView([28.485, -16.320], 12)
@@ -22,6 +26,15 @@ export default function Map({ origin, isochrone, resources, selected, onSelect }
     }).addTo(leaflet.current)
     return () => leaflet.current.remove()
   }, [])
+
+  // Rotate the map container to match compass bearing
+  useEffect(() => {
+    if (!mapRef.current) return
+    mapRef.current.style.transform = `rotate(${bearing}deg)`
+    mapRef.current.style.transformOrigin = '50% 50%'
+    // Force Leaflet to redraw tiles after rotation
+    leaflet.current?.invalidateSize()
+  }, [bearing])
 
   useEffect(() => {
     if (!origin) return
@@ -63,5 +76,11 @@ export default function Map({ origin, isochrone, resources, selected, onSelect }
     })
   }, [resources, selected])
 
-  return <div ref={mapRef} style={{ flex: 1 }} />
+  return (
+    <div ref={containerRef} style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+      <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+      {bearing !== 0 && <NorthIndicator bearing={bearing} />}
+      <CompassButton onBearing={setBearing} />
+    </div>
+  )
 }
