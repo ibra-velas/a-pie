@@ -85,6 +85,23 @@ export default function Sidebar({ isMobile, onSearch, onLocate, minutes, onMinut
           </button>
         </div>
 
+        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 10 }}>
+          {['Santa Cruz', 'La Laguna', 'Puerto de la Cruz', 'Candelaria', 'Los Cristianos'].map(city => (
+            <button
+              key={city}
+              onClick={() => { setAddress(city); onSearch(city) }}
+              disabled={loading}
+              style={{
+                fontSize: 11, padding: '3px 9px', borderRadius: 99,
+                border: '1px solid #d1d5db', background: '#f9fafb',
+                color: '#374151', cursor: 'pointer',
+              }}
+            >
+              {city}
+            </button>
+          ))}
+        </div>
+
         {error && <div style={{ fontSize: 12, color: '#D85A30', marginBottom: 8 }}>{error}</div>}
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
