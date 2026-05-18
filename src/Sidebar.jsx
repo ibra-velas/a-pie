@@ -5,13 +5,15 @@ const CATEGORIES = [
   { id: 'salud',      label: 'Salud' },
   { id: 'educacion',  label: 'Educación' },
   { id: 'ocio',       label: 'Ocio' },
+  { id: 'comercio',   label: 'Comercio' },
+  { id: 'cultura',    label: 'Cultura' },
   { id: 'transporte', label: 'Transporte' },
 ]
 
 export default function Sidebar({ isMobile, onSearch, onLocate, minutes, onMinutesChange, resources, selected, onSelect, loading, error }) {
   const [address, setAddress] = useState('')
   const [locating, setLocating] = useState(false)
-  const [activeCats, setActiveCats] = useState(['salud', 'educacion', 'ocio', 'transporte'])
+  const [activeCats, setActiveCats] = useState(['salud', 'educacion', 'ocio', 'comercio', 'cultura', 'transporte'])
 
   async function handleLocate() {
     if (!navigator.geolocation) return

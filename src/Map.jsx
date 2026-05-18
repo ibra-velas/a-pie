@@ -6,6 +6,8 @@ export const CATEGORY_COLORS = {
   educacion:  '#1D9E75',
   ocio:       '#7F77DD',
   transporte: '#BA7517',
+  comercio:   '#E0A020',
+  cultura:    '#C2436A',
 }
 
 export default function Map({ origin, isochrone, resources, selected, onSelect }) {

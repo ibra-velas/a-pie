@@ -13,11 +13,36 @@ TENERIFE_BBOX = dict(lat_min=27.9, lat_max=28.6, lon_min=-16.9, lon_max=-16.1)
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
 OSM_SOURCES = [
-    ("pharmacy",   "salud",      "farmacia"),
-    ("school",     "educacion",  "colegio"),
-    ("hospital",   "salud",      "hospital"),
-    ("park",       "ocio",       "parque"),
-    ("bus_stop",   "transporte", "parada_bus"),   # OSM: highway=bus_stop
+    # salud
+    ("pharmacy",       "salud",      "farmacia"),
+    ("hospital",       "salud",      "hospital"),
+    ("clinic",         "salud",      "clinica"),
+    ("doctors",        "salud",      "medico"),
+    # educacion
+    ("school",         "educacion",  "colegio"),
+    ("university",     "educacion",  "universidad"),
+    ("college",        "educacion",  "instituto"),
+    ("kindergarten",   "educacion",  "guarderia"),
+    # ocio – naturaleza
+    ("park",           "ocio",       "parque"),
+    # ocio – restauracion
+    ("restaurant",     "ocio",       "restaurante"),
+    ("cafe",           "ocio",       "cafe"),
+    ("bar",            "ocio",       "bar"),
+    ("fast_food",      "ocio",       "comida_rapida"),
+    # ocio – deporte
+    ("sports_centre",  "ocio",       "deportes"),
+    ("swimming_pool",  "ocio",       "piscina"),
+    ("fitness_centre", "ocio",       "gimnasio"),
+    # comercio
+    ("supermarket",    "comercio",   "supermercado"),
+    # cultura
+    ("library",        "cultura",    "biblioteca"),
+    ("museum",         "cultura",    "museo"),
+    ("theatre",        "cultura",    "teatro"),
+    ("cinema",         "cultura",    "cine"),
+    # transporte
+    ("bus_stop",       "transporte", "parada_bus"),
 ]
 
 
