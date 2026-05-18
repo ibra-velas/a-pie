@@ -88,7 +88,7 @@ const CITIES = [
   // Este
   { label: 'Güímar',             lat: 28.3103, lon: -16.4093 },  // Plaza de la Candelaria
   { label: 'Puertito de Güímar', lat: 28.2847, lon: -16.3962 },  // Plaza de las Indias
-  { label: 'Candelaria',         lat: 28.3545, lon: -16.3690 },  // Playa de Candelaria
+  { label: 'Candelaria',         lat: 28.3568, lon: -16.3712 },  // Paseo Marítimo
   { label: 'Arafo',              lat: 28.3336, lon: -16.3924 },  // Plaza de San Juan
   // Área Metropolitana – barrios
   { label: 'San Andrés',         lat: 28.5118, lon: -16.2024 },  // Las Teresitas
