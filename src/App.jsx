@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Map from './Map'
 import Sidebar from './Sidebar'
+import useIsMobile from './useIsMobile'
 
 export default function App() {
   const [origin, setOrigin] = useState(null)
@@ -10,7 +11,9 @@ export default function App() {
   const [selected, setSelected] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [sheetExpanded, setSheetExpanded] = useState(false)
   const debounceRef = useRef(null)
+  const isMobile = useIsMobile()
 
   async function search(address) {
     setLoading(true)
@@ -21,6 +24,7 @@ export default function App() {
       const { lat, lon } = await geoRes.json()
       setOrigin({ lat, lon })
       await fetchResources(lat, lon, minutes)
+      if (isMobile) setSheetExpanded(true)
     } catch {
       setError('Error de conexión')
     } finally {
@@ -45,6 +49,33 @@ export default function App() {
       fetchResources(origin.lat, origin.lon, minutes).finally(() => setLoading(false))
     }, 500)
   }, [minutes])
+
+  if (isMobile) {
+    return (
+      <div style={{ position: 'relative', width: '100dvw', height: '100dvh', fontFamily: 'system-ui, sans-serif', overflow: 'hidden' }}>
+        <Map
+          origin={origin}
+          isochrone={isochrone}
+          resources={resources}
+          selected={selected}
+          onSelect={setSelected}
+        />
+        <Sidebar
+          mobile
+          expanded={sheetExpanded}
+          onToggleExpand={() => setSheetExpanded(e => !e)}
+          onSearch={search}
+          minutes={minutes}
+          onMinutesChange={setMinutes}
+          resources={resources}
+          selected={selected}
+          onSelect={setSelected}
+          loading={loading}
+          error={error}
+        />
+      </div>
+    )
+  }
 
   return (
     <div style={{ display: 'flex', height: '100vh', fontFamily: 'system-ui, sans-serif' }}>
