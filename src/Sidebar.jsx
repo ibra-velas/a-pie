@@ -1,26 +1,77 @@
 import { useState } from 'react'
 import { CATEGORY_COLORS } from './Map'
 
-const CATEGORIES = [
-  { id: 'salud',      label: 'Salud' },
-  { id: 'educacion',  label: 'Educación' },
-  { id: 'ocio',       label: 'Ocio' },
-  { id: 'comercio',   label: 'Comercio' },
-  { id: 'cultura',    label: 'Cultura' },
-  { id: 'transporte', label: 'Transporte' },
+// Grouped pill config — transporte intentionally omitted
+export const PILL_GROUPS = [
+  {
+    label: 'Comida & Bebida',
+    color: '#C4622D',
+    pills: [
+      { id: 'restaurante',   label: 'Restaurantes' },
+      { id: 'bar',           label: 'Bares' },
+      { id: 'cafe',          label: 'Cafés' },
+      { id: 'comida_rapida', label: 'Comida rápida' },
+      { id: 'panaderia',     label: 'Panaderías' },
+      { id: 'carniceria',    label: 'Carnicerías' },
+      { id: 'fruteria',      label: 'Fruterías' },
+      { id: 'pescaderia',    label: 'Pescaderías' },
+      { id: 'mercado',       label: 'Mercados' },
+    ],
+  },
+  {
+    label: 'Tiendas',
+    color: '#2E86AB',
+    pills: [
+      { id: 'supermercado',  label: 'Supermercados' },
+      { id: 'tienda',        label: 'Tiendas' },
+      { id: 'libreria',      label: 'Librerías' },
+      { id: 'ferreteria',    label: 'Ferreterías' },
+      { id: 'barberia',      label: 'Barberías' },
+      { id: 'floristeria',   label: 'Floristerías' },
+    ],
+  },
+  {
+    label: 'Salud',
+    color: CATEGORY_COLORS.salud,
+    pills: [
+      { id: 'farmacia',      label: 'Farmacias' },
+      { id: 'clinica',       label: 'Clínicas' },
+      { id: 'medico',        label: 'Médicos' },
+      { id: 'hospital',      label: 'Hospitales' },
+    ],
+  },
+  {
+    label: 'Cultura',
+    color: CATEGORY_COLORS.cultura,
+    // Single pill that covers all cultura subcategories
+    pills: [{ id: '__cultura', label: 'Cultura', subs: ['biblioteca', 'museo', 'teatro', 'cine'] }],
+  },
+  {
+    label: 'Ocio',
+    color: CATEGORY_COLORS.ocio,
+    // Single pill that covers all ocio subcategories
+    pills: [{ id: '__ocio', label: 'Ocio', subs: ['parque', 'deportes', 'piscina', 'gimnasio'] }],
+  },
 ]
+
+// Flat list of all real subcategory strings that should be ON by default
+export const ALL_SUBS = PILL_GROUPS.flatMap(g =>
+  g.pills.flatMap(p => p.subs ?? [p.id])
+)
 
 const CITIES = ['Santa Cruz', 'La Laguna', 'Puerto de la Cruz', 'Candelaria', 'Los Cristianos']
 
 export default function Sidebar({
   isMobile, onSearch, onLocate,
   minutes, onMinutesChange,
-  resources, allResources, activeCats, onToggleCat,
+  resources, allResources, activeSubs,
+  onToggleSub, onToggleGroup,
   selected, onSelect,
   loading, error,
 }) {
   const [address, setAddress] = useState('')
   const [locating, setLocating] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   async function handleLocate() {
     if (!navigator.geolocation) return
@@ -49,10 +100,35 @@ export default function Sidebar({
     )
   }
 
-  // Count only active-category resources
+  // Is a pill active? For multi-sub pills, true if ALL subs are active
+  function isPillActive(pill) {
+    const subs = pill.subs ?? [pill.id]
+    return subs.every(s => activeSubs.has(s))
+  }
+
+  function handlePillClick(pill) {
+    const subs = pill.subs ?? [pill.id]
+    if (subs.length === 1) {
+      onToggleSub(subs[0])
+    } else {
+      onToggleGroup(subs)
+    }
+  }
+
   const filteredCount = Object.values(resources).flat().length
-  // Total across all categories (for the "X of Y" hint)
   const totalCount = Object.values(allResources ?? {}).flat().length
+
+  // Build a flat display list from filtered resources, preserving subcategory grouping
+  const resultGroups = PILL_GROUPS.flatMap(g =>
+    g.pills.flatMap(pill => {
+      const subs = pill.subs ?? [pill.id]
+      return subs.flatMap(sub => {
+        const items = resources[sub]
+        if (!items?.length) return []
+        return [{ sub, label: pill.label === 'Cultura' || pill.label === 'Ocio' ? sub : pill.label, color: g.color, items }]
+      })
+    })
+  )
 
   return (
     <div style={{
@@ -72,12 +148,8 @@ export default function Sidebar({
 
         {/* Search row */}
         <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-          <button
-            onClick={handleLocate}
-            disabled={locating || loading}
-            title="Usar mi ubicación"
-            style={{ padding: '7px 10px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 8, cursor: 'pointer', fontSize: 15, flexShrink: 0 }}
-          >
+          <button onClick={handleLocate} disabled={locating || loading} title="Usar mi ubicación"
+            style={{ padding: '7px 10px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 8, cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
             {locating ? '⏳' : '📍'}
           </button>
           <input
@@ -87,11 +159,8 @@ export default function Sidebar({
             placeholder="Tu dirección..."
             style={{ flex: 1, padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13 }}
           />
-          <button
-            onClick={() => onSearch(address)}
-            disabled={loading}
-            style={{ padding: '7px 12px', background: '#185FA5', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}
-          >
+          <button onClick={() => onSearch(address)} disabled={loading}
+            style={{ padding: '7px 12px', background: '#185FA5', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}>
             {loading ? '...' : '→'}
           </button>
         </div>
@@ -99,12 +168,8 @@ export default function Sidebar({
         {/* City shortcuts */}
         <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 8 }}>
           {CITIES.map(city => (
-            <button
-              key={city}
-              onClick={() => { setAddress(city); onSearch(city) }}
-              disabled={loading}
-              style={{ fontSize: 11, padding: '3px 9px', borderRadius: 99, border: '1px solid #d1d5db', background: '#f9fafb', color: '#374151', cursor: 'pointer' }}
-            >
+            <button key={city} onClick={() => { setAddress(city); onSearch(city) }} disabled={loading}
+              style={{ fontSize: 11, padding: '3px 9px', borderRadius: 99, border: '1px solid #d1d5db', background: '#f9fafb', color: '#374151', cursor: 'pointer' }}>
               {city}
             </button>
           ))}
@@ -115,34 +180,46 @@ export default function Sidebar({
         {/* Minute slider */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
           <span style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>{minutes} min a pie</span>
-          <input
-            type="range" min="5" max="30" step="5"
-            value={minutes}
-            onChange={e => onMinutesChange(Number(e.target.value))}
-            style={{ flex: 1 }}
-          />
+          <input type="range" min="5" max="30" step="5" value={minutes}
+            onChange={e => onMinutesChange(Number(e.target.value))} style={{ flex: 1 }} />
         </div>
 
-        {/* Category filter pills */}
-        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-          {CATEGORIES.map(cat => {
-            const active = activeCats.includes(cat.id)
-            const color = CATEGORY_COLORS[cat.id]
-            const count = (allResources?.[cat.id] ?? []).length
-            return (
-              <button key={cat.id} onClick={() => onToggleCat(cat.id)} style={{
-                fontSize: 11, padding: '3px 10px', borderRadius: 99,
-                border: `1px solid ${active ? color : '#d1d5db'}`,
-                background: active ? color + '22' : 'transparent',
-                color: active ? color : '#9ca3af',
-                cursor: 'pointer',
-                opacity: count === 0 ? 0.4 : 1,
-              }}>
-                {cat.label}{count > 0 ? ` ${count}` : ''}
-              </button>
-            )
-          })}
-        </div>
+        {/* Filter toggle */}
+        <button onClick={() => setFiltersOpen(o => !o)}
+          style={{ width: '100%', padding: '5px 0', fontSize: 12, color: '#6b7280', background: 'none', border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer' }}>
+          {filtersOpen ? '▲ Ocultar filtros' : '▼ Filtrar por tipo'}
+        </button>
+
+        {/* Grouped pills — shown when open */}
+        {filtersOpen && (
+          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {PILL_GROUPS.map(group => (
+              <div key={group.label}>
+                <div style={{ fontSize: 10, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>
+                  {group.label}
+                </div>
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                  {group.pills.map(pill => {
+                    const active = isPillActive(pill)
+                    const count = (pill.subs ?? [pill.id]).reduce((n, s) => n + ((allResources?.[s] ?? []).length), 0)
+                    return (
+                      <button key={pill.id} onClick={() => handlePillClick(pill)} style={{
+                        fontSize: 11, padding: '3px 9px', borderRadius: 99,
+                        border: `1px solid ${active ? group.color : '#d1d5db'}`,
+                        background: active ? group.color + '22' : 'transparent',
+                        color: active ? group.color : '#9ca3af',
+                        cursor: 'pointer',
+                        opacity: count === 0 ? 0.35 : 1,
+                      }}>
+                        {pill.label}{count > 0 ? ` ${count}` : ''}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Results list ── */}
@@ -150,37 +227,33 @@ export default function Sidebar({
         {totalCount > 0 && (
           <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>
             {filteredCount === totalCount
-              ? `${totalCount} recursos en ${minutes} min a pie`
-              : `${filteredCount} de ${totalCount} recursos · ${minutes} min a pie`}
+              ? `${totalCount} lugares en ${minutes} min a pie`
+              : `${filteredCount} de ${totalCount} · ${minutes} min a pie`}
           </div>
         )}
 
-        {CATEGORIES.filter(c => activeCats.includes(c.id)).map(cat => {
-          const items = resources[cat.id]
-          if (!items?.length) return null
-          return (
-            <div key={cat.id} style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: CATEGORY_COLORS[cat.id], textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
-                {cat.label} · {items.length}
-              </div>
-              {items.map(item => (
-                <div key={item.id} onClick={() => onSelect(item)} style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '7px 8px', borderRadius: 8, cursor: 'pointer',
-                  background: selected?.id === item.id ? '#EFF6FF' : 'transparent',
-                  marginBottom: 2,
-                }}>
-                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: CATEGORY_COLORS[cat.id], flexShrink: 0 }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
-                    <div style={{ fontSize: 11, color: '#9ca3af' }}>{item.subcategory}</div>
-                  </div>
-                  <div style={{ fontSize: 12, color: '#9ca3af', flexShrink: 0 }}>{item.distance_m}m</div>
-                </div>
-              ))}
+        {resultGroups.map(({ sub, label, color, items }) => (
+          <div key={sub} style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+              {label} · {items.length}
             </div>
-          )
-        })}
+            {items.map(item => (
+              <div key={item.id} onClick={() => onSelect(item)} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '7px 8px', borderRadius: 8, cursor: 'pointer',
+                background: selected?.id === item.id ? '#EFF6FF' : 'transparent',
+                marginBottom: 2,
+              }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: CATEGORY_COLORS[item.category] ?? color, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+                  <div style={{ fontSize: 11, color: '#9ca3af' }}>{item.address || item.subcategory}</div>
+                </div>
+                <div style={{ fontSize: 12, color: '#9ca3af', flexShrink: 0 }}>{item.distance_m}m</div>
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     </div>
   )

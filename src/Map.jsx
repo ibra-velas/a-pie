@@ -43,25 +43,24 @@ export default function Map({ origin, isochrone, resources, selected, onSelect }
   }, [isochrone])
 
   useEffect(() => {
-    markerLayer.current?.clearLayers()
     if (!markerLayer.current) {
       markerLayer.current = L.layerGroup().addTo(leaflet.current)
     }
-    Object.entries(resources).forEach(([cat, items]) => {
-      items.forEach(item => {
-        const [lon, lat] = item.location.coordinates
-        const isSelected = selected?.id === item.id
-        L.circleMarker([lat, lon], {
-          radius: isSelected ? 10 : 7,
-          color: '#fff',
-          weight: isSelected ? 3 : 2,
-          fillColor: CATEGORY_COLORS[cat] ?? '#888',
-          fillOpacity: 1,
-        })
-          .on('click', () => onSelect(item))
-          .bindTooltip(item.name, { direction: 'top', offset: [0, -8] })
-          .addTo(markerLayer.current)
+    markerLayer.current.clearLayers()
+    // resources is now keyed by subcategory; each item carries its own category
+    Object.values(resources).flat().forEach(item => {
+      const [lon, lat] = item.location.coordinates
+      const isSelected = selected?.id === item.id
+      L.circleMarker([lat, lon], {
+        radius: isSelected ? 10 : 7,
+        color: '#fff',
+        weight: isSelected ? 3 : 2,
+        fillColor: CATEGORY_COLORS[item.category] ?? '#888',
+        fillOpacity: 1,
       })
+        .on('click', () => onSelect(item))
+        .bindTooltip(item.name, { direction: 'top', offset: [0, -8] })
+        .addTo(markerLayer.current)
     })
   }, [resources, selected])
 

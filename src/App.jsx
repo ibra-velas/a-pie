@@ -1,31 +1,40 @@
 import { useState, useEffect, useRef } from 'react'
 import Map from './Map'
-import Sidebar from './Sidebar'
+import Sidebar, { ALL_SUBS } from './Sidebar'
 import useIsMobile from './useIsMobile'
-
-const ALL_CATS = ['salud', 'educacion', 'ocio', 'comercio', 'cultura', 'transporte']
 
 export default function App() {
   const [origin, setOrigin] = useState(null)
   const [minutes, setMinutes] = useState(10)
   const [isochrone, setIsochrone] = useState(null)
-  const [resources, setResources] = useState({})
+  const [resources, setResources] = useState({})   // keyed by subcategory
   const [selected, setSelected] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [activeCats, setActiveCats] = useState(ALL_CATS)
+  const [activeSubs, setActiveSubs] = useState(new Set(ALL_SUBS))
   const debounceRef = useRef(null)
   const isMobile = useIsMobile()
 
-  function toggleCat(id) {
-    setActiveCats(prev =>
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
-    )
+  function toggleSub(sub) {
+    setActiveSubs(prev => {
+      const next = new Set(prev)
+      next.has(sub) ? next.delete(sub) : next.add(sub)
+      return next
+    })
   }
 
-  // Derive filtered resources from the full set + active cats
+  function toggleGroup(subs) {
+    setActiveSubs(prev => {
+      const allOn = subs.every(s => prev.has(s))
+      const next = new Set(prev)
+      subs.forEach(s => allOn ? next.delete(s) : next.add(s))
+      return next
+    })
+  }
+
+  // Filter resources to only active subcategories
   const filteredResources = Object.fromEntries(
-    Object.entries(resources).filter(([cat]) => activeCats.includes(cat))
+    Object.entries(resources).filter(([sub]) => activeSubs.has(sub))
   )
 
   async function search(address) {
@@ -62,7 +71,7 @@ export default function App() {
     if (!res.ok) { setError('Error cargando recursos'); return }
     const data = await res.json()
     setIsochrone(data.polygon)
-    setResources(data.by_category)
+    setResources(data.by_subcategory)
     setSelected(null)
   }
 
@@ -85,8 +94,9 @@ export default function App() {
         onMinutesChange={setMinutes}
         resources={filteredResources}
         allResources={resources}
-        activeCats={activeCats}
-        onToggleCat={toggleCat}
+        activeSubs={activeSubs}
+        onToggleSub={toggleSub}
+        onToggleGroup={toggleGroup}
         selected={selected}
         onSelect={setSelected}
         loading={loading}

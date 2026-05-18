@@ -8,7 +8,7 @@ const supabase = createClient(
 )
 
 export default async function handler(req, res) {
-  const { lat, lon, minutes = '10', categories } = req.query
+  const { lat, lon, minutes = '10' } = req.query
   if (!lat || !lon) return res.status(400).json({ error: 'Missing lat/lon' })
 
   let polygon
@@ -30,15 +30,15 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Error consultando recursos', detail: error.message })
   }
 
-  const catFilter = categories ? categories.split(',') : null
-  const filtered = catFilter ? data.filter(r => catFilter.includes(r.category)) : data
-
-  const by_category = {}
-  for (const row of filtered) {
-    if (!by_category[row.category]) by_category[row.category] = []
-    by_category[row.category].push({
+  // Group by subcategory; keep category on each item for map colour
+  const by_subcategory = {}
+  for (const row of data) {
+    const key = row.subcategory
+    if (!by_subcategory[key]) by_subcategory[key] = []
+    by_subcategory[key].push({
       id: row.id,
       name: row.name,
+      category: row.category,
       subcategory: row.subcategory,
       address: row.address,
       distance_m: row.distance_m,
@@ -50,7 +50,7 @@ export default async function handler(req, res) {
     origin: { lat: parseFloat(lat), lon: parseFloat(lon) },
     minutes: parseInt(minutes),
     polygon,
-    total: filtered.length,
-    by_category,
+    total: data.length,
+    by_subcategory,
   })
 }
