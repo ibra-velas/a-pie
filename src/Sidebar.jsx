@@ -66,7 +66,7 @@ const CITY_ZONES = [
       { label: 'Santa Cruz',    lat: 28.4682, lon: -16.2546 },
       { label: 'La Laguna',     lat: 28.4869, lon: -16.3182 },
       { label: 'La Cuesta',     lat: 28.4700, lon: -16.2900 },
-      { label: 'San Andrés',    lat: 28.5118, lon: -16.2024 },
+      { label: 'San Andrés',    lat: 28.5090, lon: -16.2005 },  // Calle Dique
       { label: 'El Rosario',    lat: 28.4524, lon: -16.2935 },
       { label: 'Tegueste',      lat: 28.5105, lon: -16.3290 },
     ],
