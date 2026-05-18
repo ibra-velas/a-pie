@@ -195,6 +195,12 @@ export default function Sidebar({
         {/* Grouped pills — shown when open */}
         {filtersOpen && (
           <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
+              <button onClick={() => onToggleGroup(ALL_SUBS)}
+                style={{ fontSize: 11, padding: '2px 10px', borderRadius: 99, border: '1px solid #d1d5db', background: 'none', color: '#6b7280', cursor: 'pointer' }}>
+                {ALL_SUBS.every(s => activeSubs.has(s)) ? 'Desmarcar todo' : 'Marcar todo'}
+              </button>
+            </div>
             {PILL_GROUPS.map(group => (
               <div key={group.label}>
                 <div style={{ fontSize: 10, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>
