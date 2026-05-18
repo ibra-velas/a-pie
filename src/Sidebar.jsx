@@ -60,11 +60,35 @@ export const ALL_SUBS = PILL_GROUPS.flatMap(g =>
 )
 
 const CITIES = [
-  { label: 'Santa Cruz',        lat: 28.4682, lon: -16.2546 },  // Plaza de España
-  { label: 'La Laguna',         lat: 28.4869, lon: -16.3182 },  // Catedral
-  { label: 'Puerto de la Cruz', lat: 28.4142, lon: -16.5487 },  // Plaza del Charco
-  { label: 'Candelaria',        lat: 28.3580, lon: -16.3727 },  // Basílica
-  { label: 'Los Cristianos',    lat: 28.0503, lon: -16.7150 },  // Puerto
+  // Área Metropolitana
+  { label: 'Santa Cruz',         lat: 28.4682, lon: -16.2546 },  // Plaza de España
+  { label: 'La Laguna',          lat: 28.4869, lon: -16.3182 },  // Catedral
+  { label: 'El Rosario',         lat: 28.4524, lon: -16.2935 },  // Ayuntamiento
+  { label: 'Tegueste',           lat: 28.5105, lon: -16.3290 },  // Plaza del Conde
+  // Norte
+  { label: 'Tacoronte',          lat: 28.4761, lon: -16.4197 },  // Plaza del Cristo
+  { label: 'La Matanza',         lat: 28.4517, lon: -16.4628 },  // Iglesia
+  { label: 'La Orotava',         lat: 28.3896, lon: -16.5225 },  // Plaza del Ayuntamiento
+  { label: 'Puerto de la Cruz',  lat: 28.4142, lon: -16.5487 },  // Plaza del Charco
+  { label: 'Los Realejos',       lat: 28.3821, lon: -16.5889 },  // Iglesia de Santiago
+  { label: 'Icod de los Vinos',  lat: 28.3704, lon: -16.7168 },  // Plaza de la Pila
+  { label: 'Garachico',          lat: 28.3720, lon: -16.7624 },  // Plaza de la Libertad
+  { label: 'Buenavista',         lat: 28.3787, lon: -16.8649 },  // Plaza del Ayuntamiento
+  // Oeste
+  { label: 'Santiago del Teide', lat: 28.2970, lon: -16.8160 },  // Iglesia de Santiago
+  { label: 'Guía de Isora',      lat: 28.2100, lon: -16.7749 },  // Plaza de la Iglesia
+  // Sur
+  { label: 'Adeje',              lat: 28.1219, lon: -16.7259 },  // Plaza de España
+  { label: 'Costa Adeje',        lat: 28.0786, lon: -16.7367 },  // Playa del Duque área
+  { label: 'Las Américas',       lat: 28.0580, lon: -16.7280 },  // Centro comercial
+  { label: 'Los Cristianos',     lat: 28.0503, lon: -16.7150 },  // Puerto
+  { label: 'Arona',              lat: 28.0990, lon: -16.6421 },  // Plaza del Cristo
+  { label: 'Granadilla',         lat: 28.1193, lon: -16.5752 },  // Plaza de la Constitución
+  { label: 'El Médano',          lat: 28.0462, lon: -16.5384 },  // Playa El Médano
+  // Este
+  { label: 'Güímar',             lat: 28.3103, lon: -16.4093 },  // Plaza de la Candelaria
+  { label: 'Candelaria',         lat: 28.3580, lon: -16.3727 },  // Basílica
+  { label: 'Arafo',              lat: 28.3336, lon: -16.3924 },  // Plaza de San Juan
 ]
 
 export default function Sidebar({
@@ -174,12 +198,12 @@ export default function Sidebar({
         </div>
 
         {/* City shortcuts */}
-        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 8 }}>
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8, maxHeight: 72, overflowY: 'auto' }}>
           {CITIES.map(city => (
             <button key={city.label}
               onClick={() => { setAddress(city.label); onLocate(city.lat, city.lon) }}
               disabled={loading}
-              style={{ fontSize: 11, padding: '3px 9px', borderRadius: 99, border: '1px solid #d1d5db', background: '#f9fafb', color: '#374151', cursor: 'pointer' }}>
+              style={{ fontSize: 10, padding: '2px 8px', borderRadius: 99, border: '1px solid #d1d5db', background: '#f9fafb', color: '#374151', cursor: 'pointer', whiteSpace: 'nowrap' }}>
               {city.label}
             </button>
           ))}
