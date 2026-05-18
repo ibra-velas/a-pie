@@ -1,5 +1,6 @@
 import json
 import os
+import time
 import requests
 from dotenv import load_dotenv
 from sqlalchemy import create_engine, text
@@ -12,65 +13,72 @@ TENERIFE_BBOX = dict(lat_min=27.9, lat_max=28.6, lon_min=-16.9, lon_max=-16.1)
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
+# Each entry: (osm_key, osm_value, category, subcategory)
 OSM_SOURCES = [
     # salud
-    ("pharmacy",       "salud",      "farmacia"),
-    ("hospital",       "salud",      "hospital"),
-    ("clinic",         "salud",      "clinica"),
-    ("doctors",        "salud",      "medico"),
+    ("amenity", "pharmacy",       "salud",      "farmacia"),
+    ("amenity", "hospital",       "salud",      "hospital"),
+    ("amenity", "clinic",         "salud",      "clinica"),
+    ("amenity", "doctors",        "salud",      "medico"),
     # educacion
-    ("school",         "educacion",  "colegio"),
-    ("university",     "educacion",  "universidad"),
-    ("college",        "educacion",  "instituto"),
-    ("kindergarten",   "educacion",  "guarderia"),
+    ("amenity", "school",         "educacion",  "colegio"),
+    ("amenity", "university",     "educacion",  "universidad"),
+    ("amenity", "college",        "educacion",  "instituto"),
+    ("amenity", "kindergarten",   "educacion",  "guarderia"),
     # ocio – naturaleza
-    ("park",           "ocio",       "parque"),
+    ("leisure", "park",           "ocio",       "parque"),
     # ocio – restauracion
-    ("restaurant",     "ocio",       "restaurante"),
-    ("cafe",           "ocio",       "cafe"),
-    ("bar",            "ocio",       "bar"),
-    ("fast_food",      "ocio",       "comida_rapida"),
+    ("amenity", "restaurant",     "ocio",       "restaurante"),
+    ("amenity", "cafe",           "ocio",       "cafe"),
+    ("amenity", "bar",            "ocio",       "bar"),
+    ("amenity", "fast_food",      "ocio",       "comida_rapida"),
     # ocio – deporte
-    ("sports_centre",  "ocio",       "deportes"),
-    ("swimming_pool",  "ocio",       "piscina"),
-    ("fitness_centre", "ocio",       "gimnasio"),
-    # comercio
-    ("supermarket",    "comercio",   "supermercado"),
+    ("leisure", "sports_centre",  "ocio",       "deportes"),
+    ("leisure", "swimming_pool",  "ocio",       "piscina"),
+    ("leisure", "fitness_centre", "ocio",       "gimnasio"),
+    # comercio — supermarkets use shop= tag in OSM
+    ("shop",    "supermarket",    "comercio",   "supermercado"),
+    ("shop",    "convenience",    "comercio",   "tienda"),
+    ("shop",    "bakery",         "comercio",   "panaderia"),
     # cultura
-    ("library",        "cultura",    "biblioteca"),
-    ("museum",         "cultura",    "museo"),
-    ("theatre",        "cultura",    "teatro"),
-    ("cinema",         "cultura",    "cine"),
+    ("amenity", "library",        "cultura",    "biblioteca"),
+    ("tourism", "museum",         "cultura",    "museo"),
+    ("amenity", "theatre",        "cultura",    "teatro"),
+    ("amenity", "cinema",         "cultura",    "cine"),
     # transporte
-    ("bus_stop",       "transporte", "parada_bus"),
+    ("highway", "bus_stop",       "transporte", "parada_bus"),
 ]
 
 
-def fetch_osm(amenity: str) -> list[dict]:
-    # bbox: south,west,north,east (Tenerife)
+def fetch_osm(key: str, value: str) -> list[dict]:
     bbox = "27.9,-16.9,28.6,-16.1"
     query = f"""
     [out:json][timeout:60];
     (
-      node["amenity"="{amenity}"]({bbox});
-      node["leisure"="{amenity}"]({bbox});
-      node["highway"="{amenity}"]({bbox});
+      node["{key}"="{value}"]({bbox});
+      way["{key}"="{value}"]({bbox});
     );
-    out body;
+    out body center;
     """
-    headers = {"User-Agent": "AccesibilidadTenerife/1.0", "Content-Type": "application/x-www-form-urlencoded"}
-    r = requests.post(OVERPASS_URL, data=f"data={requests.utils.quote(query)}", headers=headers, timeout=90)
-    if not r.ok:
-        print(f"  Overpass error {r.status_code}: {r.text[:300]}")
-        r.raise_for_status()
-    return r.json().get("elements", [])
+    headers = {"User-Agent": "AccesibilidadTenerife/1.0"}
+    for attempt in range(3):
+        try:
+            r = requests.post(OVERPASS_URL, data={"data": query}, headers=headers, timeout=90)
+            if r.ok:
+                return r.json().get("elements", [])
+            print(f"  Overpass error {r.status_code} (attempt {attempt+1})")
+        except Exception as e:
+            print(f"  Request error: {e} (attempt {attempt+1})")
+        time.sleep(10)
+    return []
 
 
 def parse_osm(elements: list[dict], category: str, subcategory: str) -> list[dict]:
     rows = []
     for el in elements:
-        lat = el.get("lat")
-        lon = el.get("lon")
+        # nodes have lat/lon directly; ways have a "center" object
+        lat = el.get("lat") or (el.get("center") or {}).get("lat")
+        lon = el.get("lon") or (el.get("center") or {}).get("lon")
         if lat is None or lon is None:
             continue
         if not (TENERIFE_BBOX["lat_min"] <= lat <= TENERIFE_BBOX["lat_max"]):
@@ -90,9 +98,10 @@ def parse_osm(elements: list[dict], category: str, subcategory: str) -> list[dic
             "address":     tags.get("addr:street", ""),
             "municipality":tags.get("addr:city", "").upper(),
             "source":      "osm",
-            "source_id":   str(el["id"]),
+            "source_id":   f"{el['type']}_{el['id']}",
             "extra":       {k: v for k, v in tags.items()
                            if k not in ("name", "name:es", "amenity", "leisure",
+                                        "shop", "tourism", "highway",
                                         "addr:street", "addr:city")},
         })
     return rows
@@ -122,12 +131,13 @@ def upsert(rows: list[dict]):
 
 
 def run():
-    for amenity, category, subcategory in OSM_SOURCES:
-        print(f"Fetching OSM {amenity}...")
-        elements = fetch_osm(amenity)
+    for key, value, category, subcategory in OSM_SOURCES:
+        print(f"Fetching OSM {key}={value}...")
+        elements = fetch_osm(key, value)
         rows = parse_osm(elements, category, subcategory)
         upsert(rows)
         print(f"  {len(rows)} records upserted")
+        time.sleep(2)  # be polite to Overpass
 
 
 if __name__ == "__main__":
