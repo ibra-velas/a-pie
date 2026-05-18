@@ -59,7 +59,13 @@ export const ALL_SUBS = PILL_GROUPS.flatMap(g =>
   g.pills.flatMap(p => p.subs ?? [p.id])
 )
 
-const CITIES = ['Santa Cruz', 'La Laguna', 'Puerto de la Cruz', 'Candelaria', 'Los Cristianos']
+const CITIES = [
+  { label: 'Santa Cruz',        lat: 28.4682, lon: -16.2546 },  // Plaza de España
+  { label: 'La Laguna',         lat: 28.4869, lon: -16.3182 },  // Catedral
+  { label: 'Puerto de la Cruz', lat: 28.4142, lon: -16.5487 },  // Plaza del Charco
+  { label: 'Candelaria',        lat: 28.3580, lon: -16.3727 },  // Basílica
+  { label: 'Los Cristianos',    lat: 28.0503, lon: -16.7150 },  // Puerto
+]
 
 export default function Sidebar({
   isMobile, onSearch, onLocate,
@@ -170,9 +176,11 @@ export default function Sidebar({
         {/* City shortcuts */}
         <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 8 }}>
           {CITIES.map(city => (
-            <button key={city} onClick={() => { setAddress(city); onSearch(city) }} disabled={loading}
+            <button key={city.label}
+              onClick={() => { setAddress(city.label); onLocate(city.lat, city.lon) }}
+              disabled={loading}
               style={{ fontSize: 11, padding: '3px 9px', borderRadius: 99, border: '1px solid #d1d5db', background: '#f9fafb', color: '#374151', cursor: 'pointer' }}>
-              {city}
+              {city.label}
             </button>
           ))}
         </div>
