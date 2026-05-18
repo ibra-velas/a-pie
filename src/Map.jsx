@@ -74,7 +74,7 @@ function makeIcon(item, isSelected) {
       box-shadow:${shadow};
       cursor:pointer;
       transition:transform 0.1s;
-    "><span style="filter:grayscale(1)">${emoji}</span></div>`,
+    ">${emoji}</div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
     tooltipAnchor: [0, -(size / 2 + 4)],
