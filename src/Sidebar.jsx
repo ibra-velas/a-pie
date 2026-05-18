@@ -133,13 +133,15 @@ export default function Sidebar({
   return (
     <div style={{
       width: isMobile ? '100%' : 300,
-      maxHeight: isMobile ? '45vh' : 'none',
+      maxHeight: isMobile ? '50vh' : 'none',
       display: 'flex',
       flexDirection: 'column',
       borderRight: isMobile ? 'none' : '1px solid #e5e7eb',
       borderBottom: isMobile ? '1px solid #e5e7eb' : 'none',
       background: '#fff',
-      overflow: 'hidden',
+      // Mobile: single scroll zone so pill groups never get clipped
+      overflowY: isMobile ? 'auto' : 'hidden',
+      overflowX: 'hidden',
     }}>
 
       {/* ── Controls ── */}
@@ -223,7 +225,7 @@ export default function Sidebar({
       </div>
 
       {/* ── Results list ── */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '10px 14px' }}>
+      <div style={{ flex: 1, overflowY: isMobile ? 'visible' : 'auto', padding: '10px 14px' }}>
         {totalCount > 0 && (
           <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>
             {filteredCount === totalCount
