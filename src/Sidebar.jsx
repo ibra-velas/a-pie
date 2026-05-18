@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { CATEGORY_COLORS } from './Map'
 
 // Grouped pill config — transporte intentionally omitted
@@ -126,6 +126,13 @@ export default function Sidebar({
   const [locating, setLocating] = useState(false)
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [selectedZone, setSelectedZone] = useState(null)
+  const selectedItemRef = useRef(null)
+
+  useEffect(() => {
+    if (selected && selectedItemRef.current) {
+      selectedItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [selected])
 
   async function handleLocate() {
     if (!navigator.geolocation) return
@@ -330,7 +337,7 @@ export default function Sidebar({
               const mapsUrl = `https://www.google.com/maps?q=${lat},${lon}`
               const isSelected = selected?.id === item.id
               return (
-                <div key={item.id}>
+                <div key={item.id} ref={isSelected ? selectedItemRef : null}>
                   <div onClick={() => onSelect(item)} style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '7px 8px', borderRadius: isSelected ? '8px 8px 0 0' : 8,

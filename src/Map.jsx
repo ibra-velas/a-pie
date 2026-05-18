@@ -55,8 +55,8 @@ const SUBCATEGORY_ICONS = {
 function makeIcon(item, isSelected) {
   const emoji = SUBCATEGORY_ICONS[item.subcategory] ?? '📍'
   const color = CATEGORY_COLORS[item.category] ?? '#888'
-  const size = isSelected ? 34 : 28
-  const fontSize = isSelected ? 15 : 12
+  const size = isSelected ? 26 : 20
+  const fontSize = isSelected ? 11 : 9
   const border = isSelected ? `3px solid #fff` : `2px solid rgba(255,255,255,0.8)`
   const shadow = isSelected
     ? '0 2px 8px rgba(0,0,0,0.4)'
