@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create *)",
+      "Bash(vercel dev *)",
+      "Bash(curl -s \"http://localhost:3000/api/geocode?q=Plaza+de+España,+Santa+Cruz+de+Tenerife\")",
+      "Bash(curl *)",
+      "Read(//tmp/**)",
+      "Bash(pkill -f \"vercel dev\")",
+      "Bash(npm install *)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(npx vite *)",
+      "Bash(python -c ' *)",
+      "Bash(python run_ingesta.py)",
+      "WebSearch",
+      "WebFetch(domain:www.santacruzdetenerife.es)",
+      "WebFetch(domain:tenerifedata.com)",
+      "WebFetch(domain:datos.canarias.es)",
+      "WebFetch(domain:www.tenerifedata.com)",
+      "WebFetch(domain:datos.tenerife.es)"
+    ]
+  }
+}

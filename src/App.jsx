@@ -7,13 +7,13 @@ import useIsMobile from './useIsMobile'
 
 export default function App() {
   const [origin, setOrigin] = useState(null)
-  const [minutes, setMinutes] = useState(10)
+  const [minutes, setMinutes] = useState(5)
   const [isochrone, setIsochrone] = useState(null)
   const [resources, setResources] = useState({})   // keyed by subcategory
   const [selected, setSelected] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [activeSubs, setActiveSubs] = useState(new Set(ALL_SUBS))
+  const [activeSubs, setActiveSubs] = useState(new Set(['bar', 'cafe', 'comida_rapida']))
   const [showLegal, setShowLegal] = useState(false)
   const debounceRef = useRef(null)
   const isMobile = useIsMobile()
