@@ -442,6 +442,18 @@ export default function Sidebar({
           >
             Aviso legal y privacidad
           </button>
+          <span style={{ margin: '0 6px', color: '#C9BFB0' }}>·</span>
+          <a
+            href="mailto:ibravhq@gmail.com?subject=A%20Pie%20—%20Contacto"
+            style={{
+              color: '#1C7A8A',
+              fontSize: 11,
+              textDecoration: 'underline',
+              textDecorationColor: 'rgba(28,122,138,0.35)',
+            }}
+          >
+            Contacto
+          </a>
           <div style={{ marginTop: 6 }}>
             Datos © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" style={{ color: '#8A7F70' }}>OpenStreetMap</a> ·
             Tiles © <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer" style={{ color: '#8A7F70' }}>CARTO</a>

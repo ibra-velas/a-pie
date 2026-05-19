@@ -3,6 +3,7 @@ import Map from './Map'
 import Sidebar, { ALL_SUBS } from './Sidebar'
 import Tour from './Tour'
 import Legal from './Legal'
+import InstallButton from './InstallButton'
 import useIsMobile from './useIsMobile'
 
 export default function App() {
@@ -122,6 +123,7 @@ export default function App() {
         onSelect={setSelected}
       />
       <Tour />
+      <InstallButton />
       {showLegal && <Legal onClose={() => setShowLegal(false)} />}
     </div>
   )
