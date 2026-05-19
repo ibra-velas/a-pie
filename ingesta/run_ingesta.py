@@ -40,7 +40,10 @@ OSM_SOURCES = [
     # comercio — supermarkets use shop= tag in OSM
     ("shop",    "supermarket",    "comercio",   "supermercado"),
     ("shop",    "convenience",    "comercio",   "tienda"),
+    ("shop",    "variety_store",  "comercio",   "tienda"),
     ("shop",    "bakery",         "comercio",   "panaderia"),
+    ("shop",    "hairdresser",    "comercio",   "peluqueria"),
+    ("shop",    "barber",         "comercio",   "peluqueria"),
     # cultura
     ("amenity", "library",        "cultura",    "biblioteca"),
     ("tourism", "museum",         "cultura",    "museo"),

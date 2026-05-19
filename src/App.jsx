@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import Map from './Map'
 import Sidebar, { ALL_SUBS } from './Sidebar'
+import Tour from './Tour'
+import Legal from './Legal'
 import useIsMobile from './useIsMobile'
 
 export default function App() {
@@ -12,6 +14,7 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [activeSubs, setActiveSubs] = useState(new Set(ALL_SUBS))
+  const [showLegal, setShowLegal] = useState(false)
   const debounceRef = useRef(null)
   const isMobile = useIsMobile()
 
@@ -76,6 +79,14 @@ export default function App() {
   }
 
   useEffect(() => {
+    // Load La Laguna (Catedral) as default on first open
+    const lat = 28.4869, lon = -16.3182
+    setOrigin({ lat, lon })
+    setLoading(true)
+    fetchResources(lat, lon, minutes).finally(() => setLoading(false))
+  }, [])
+
+  useEffect(() => {
     if (!origin) return
     clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
@@ -85,7 +96,7 @@ export default function App() {
   }, [minutes])
 
   return (
-    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', fontFamily: '"Plus Jakarta Sans", system-ui, sans-serif', color: '#2B2820', background: '#FAF7F2' }}>
       <Sidebar
         isMobile={isMobile}
         onSearch={search}
@@ -101,6 +112,7 @@ export default function App() {
         onSelect={setSelected}
         loading={loading}
         error={error}
+        onShowLegal={() => setShowLegal(true)}
       />
       <Map
         origin={origin}
@@ -109,6 +121,8 @@ export default function App() {
         selected={selected}
         onSelect={setSelected}
       />
+      <Tour />
+      {showLegal && <Legal onClose={() => setShowLegal(false)} />}
     </div>
   )
 }

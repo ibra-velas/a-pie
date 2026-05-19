@@ -27,7 +27,7 @@ export const PILL_GROUPS = [
       { id: 'tienda',        label: 'Tiendas' },
       { id: 'libreria',      label: 'Librerías' },
       { id: 'ferreteria',    label: 'Ferreterías' },
-      { id: 'barberia',      label: 'Barberías' },
+      { id: 'peluqueria',    label: 'Peluquerías' },
       { id: 'floristeria',   label: 'Floristerías' },
     ],
   },
@@ -122,10 +122,11 @@ export default function Sidebar({
   onToggleSub, onToggleGroup,
   selected, onSelect,
   loading, error,
+  onShowLegal,
 }) {
-  const [address, setAddress] = useState('')
+  const [address, setAddress] = useState('La Laguna')
   const [locating, setLocating] = useState(false)
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(true)
   const [selectedZone, setSelectedZone] = useState(null)
   const selectedItemRef = useRef(null)
 
@@ -200,7 +201,7 @@ export default function Sidebar({
       flexDirection: 'column',
       borderRight: isMobile ? 'none' : '1px solid #e5e7eb',
       borderBottom: isMobile ? '1px solid #e5e7eb' : 'none',
-      background: '#fff',
+      background: '#FAF7F2',
       // Mobile: single scroll zone so pill groups never get clipped
       overflowY: isMobile ? 'auto' : 'hidden',
       overflowX: 'hidden',
@@ -208,10 +209,43 @@ export default function Sidebar({
 
       {/* ── Controls ── */}
       <div style={{ padding: isMobile ? '10px 14px' : 16, borderBottom: '1px solid #e5e7eb', flexShrink: 0 }}>
-        {!isMobile && <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 15 }}>Accesibilidad Tenerife</div>}
+        <div style={{ marginBottom: 12 }}>
+          {/* Brand image — includes illustration, title and tagline */}
+          <img
+            src="/images/a-pie-logo.webp"
+            alt="A Pie · Vive tu barrio · Tenerife"
+            style={{
+              display: 'block',
+              width: '100%',
+              maxWidth: 320,
+              height: 'auto',
+            }}
+          />
+
+          {/* Live stat chip */}
+          {totalCount > 0 && (
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              marginTop: 10,
+              padding: '4px 10px',
+              background: '#FBEFE5',
+              border: '1px solid rgba(216, 124, 63, 0.25)',
+              borderRadius: 99,
+              fontSize: 11,
+              fontWeight: 600,
+              color: '#B65F26',
+              letterSpacing: '0.01em',
+            }}>
+              <span style={{ fontSize: 12 }}>🗺️</span>
+              {totalCount} lugares en {minutes} min a pie
+            </div>
+          )}
+        </div>
 
         {/* Search row */}
-        <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+        <div data-tour="address" style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
           <button onClick={handleLocate} disabled={locating || loading} title="Usar mi ubicación"
             style={{ padding: '7px 10px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 8, cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
             {locating ? '⏳' : '📍'}
@@ -221,10 +255,12 @@ export default function Sidebar({
             onChange={e => setAddress(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && onSearch(address)}
             placeholder="Tu dirección..."
+            title="Escribe una dirección en Tenerife y pulsa Enter"
             style={{ flex: 1, padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13 }}
           />
           <button onClick={() => onSearch(address)} disabled={loading}
-            style={{ padding: '7px 12px', background: '#185FA5', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}>
+            title="Buscar lugares en esta dirección"
+            style={{ padding: '7px 12px', background: '#1C7A8A', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}>
             {loading ? '...' : '→'}
           </button>
         </div>
@@ -238,10 +274,11 @@ export default function Sidebar({
               return (
                 <button key={zone}
                   onClick={() => setSelectedZone(active ? null : zone)}
+                  title={`Ver ciudades de la zona ${zone}`}
                   style={{
                     fontSize: 11, padding: '3px 10px', borderRadius: 99, cursor: 'pointer',
-                    border: `1px solid ${active ? '#185FA5' : '#d1d5db'}`,
-                    background: active ? '#185FA5' : '#f9fafb',
+                    border: `1px solid ${active ? '#1C7A8A' : '#d1d5db'}`,
+                    background: active ? '#1C7A8A' : '#f9fafb',
                     color: active ? '#fff' : '#374151',
                     fontWeight: active ? 600 : 400,
                   }}>
@@ -257,7 +294,8 @@ export default function Sidebar({
                 <button key={city.label}
                   onClick={() => { setAddress(city.label); onLocate(city.lat, city.lon) }}
                   disabled={loading}
-                  style={{ fontSize: 11, padding: '3px 9px', borderRadius: 99, border: '1px solid #d1d5db', background: '#EFF6FF', color: '#185FA5', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  title={`Centrar el mapa en ${city.label}`}
+                  style={{ fontSize: 11, padding: '3px 9px', borderRadius: 99, border: '1px solid #d1d5db', background: '#FBEFE5', color: '#1C7A8A', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                   {city.label}
                 </button>
               ))}
@@ -268,14 +306,18 @@ export default function Sidebar({
         {error && <div style={{ fontSize: 12, color: '#D85A30', marginBottom: 8 }}>{error}</div>}
 
         {/* Minute slider */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-          <span style={{ fontSize: 12, color: '#6b7280', whiteSpace: 'nowrap' }}>{minutes} min a pie</span>
+        <div data-tour="minutes" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}
+             title="Cuántos minutos estás dispuesto a caminar">
+          <span style={{ fontSize: 14, fontWeight: 700, color: '#1C7A8A', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{minutes} min a pie</span>
           <input type="range" min="5" max="30" step="5" value={minutes}
-            onChange={e => onMinutesChange(Number(e.target.value))} style={{ flex: 1 }} />
+            onChange={e => onMinutesChange(Number(e.target.value))} style={{ flex: 1 }}
+            title="Desliza para cambiar cuántos minutos quieres caminar" />
         </div>
 
         {/* Filter toggle */}
         <button onClick={() => setFiltersOpen(o => !o)}
+          data-tour="filters"
+          title="Mostrar u ocultar filtros por tipo de lugar"
           style={{ width: '100%', padding: '5px 0', fontSize: 12, color: '#6b7280', background: 'none', border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer' }}>
           {filtersOpen ? '▲ Ocultar filtros' : '▼ Filtrar por tipo'}
         </button>
@@ -285,6 +327,7 @@ export default function Sidebar({
           <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
               <button onClick={() => onToggleGroup(ALL_SUBS)}
+                title="Activar o desactivar todos los filtros a la vez"
                 style={{ fontSize: 11, padding: '2px 10px', borderRadius: 99, border: '1px solid #d1d5db', background: 'none', color: '#6b7280', cursor: 'pointer' }}>
                 {ALL_SUBS.every(s => activeSubs.has(s)) ? 'Desmarcar todo' : 'Marcar todo'}
               </button>
@@ -298,14 +341,17 @@ export default function Sidebar({
                   {group.pills.map(pill => {
                     const active = isPillActive(pill)
                     const count = (pill.subs ?? [pill.id]).reduce((n, s) => n + ((allResources?.[s] ?? []).length), 0)
+                    const hasSearched = Object.keys(allResources ?? {}).length > 0
+                    if (hasSearched && count === 0) return null
                     return (
-                      <button key={pill.id} onClick={() => handlePillClick(pill)} style={{
+                      <button key={pill.id} onClick={() => handlePillClick(pill)}
+                        title={active ? `Ocultar ${pill.label.toLowerCase()} del mapa` : `Mostrar ${pill.label.toLowerCase()} en el mapa`}
+                        style={{
                         fontSize: 11, padding: '3px 9px', borderRadius: 99,
                         border: `1px solid ${active ? group.color : '#d1d5db'}`,
                         background: active ? group.color + '22' : 'transparent',
                         color: active ? group.color : '#9ca3af',
                         cursor: 'pointer',
-                        opacity: count === 0 ? 0.35 : 1,
                       }}>
                         {pill.label}{count > 0 ? ` ${count}` : ''}
                       </button>
@@ -339,11 +385,13 @@ export default function Sidebar({
               const isSelected = selected?.id === item.id
               return (
                 <div key={item.id} ref={isSelected ? selectedItemRef : null}>
-                  <div onClick={() => onSelect(item)} style={{
+                  <div onClick={() => onSelect(item)}
+                    title="Pincha para ver en el mapa"
+                    style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     padding: '7px 8px', borderRadius: isSelected ? '8px 8px 0 0' : 8,
                     cursor: 'pointer',
-                    background: isSelected ? '#EFF6FF' : 'transparent',
+                    background: isSelected ? '#FBEFE5' : 'transparent',
                     marginBottom: isSelected ? 0 : 2,
                   }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: CATEGORY_COLORS[item.category] ?? color, flexShrink: 0 }} />
@@ -356,8 +404,8 @@ export default function Sidebar({
                   {isSelected && (
                     <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
                       display: 'block', padding: '5px 8px 7px',
-                      background: '#EFF6FF', borderRadius: '0 0 8px 8px',
-                      fontSize: 12, color: '#185FA5', textDecoration: 'none',
+                      background: '#FBEFE5', borderRadius: '0 0 8px 8px',
+                      fontSize: 12, color: '#1C7A8A', textDecoration: 'none',
                       marginBottom: 2,
                     }}>
                       📍 Ver en Google Maps →
@@ -368,6 +416,37 @@ export default function Sidebar({
             })}
           </div>
         ))}
+
+        {/* Footer with legal link and attribution */}
+        <div style={{
+          marginTop: 24,
+          paddingTop: 14,
+          borderTop: '1px solid rgba(28,122,138,0.12)',
+          fontSize: 10.5,
+          color: '#8A7F70',
+          lineHeight: 1.6,
+        }}>
+          <button
+            onClick={onShowLegal}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              color: '#1C7A8A',
+              fontSize: 11,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              textDecorationColor: 'rgba(28,122,138,0.35)',
+              fontFamily: 'inherit',
+            }}
+          >
+            Aviso legal y privacidad
+          </button>
+          <div style={{ marginTop: 6 }}>
+            Datos © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" style={{ color: '#8A7F70' }}>OpenStreetMap</a> ·
+            Tiles © <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer" style={{ color: '#8A7F70' }}>CARTO</a>
+          </div>
+        </div>
       </div>
     </div>
   )

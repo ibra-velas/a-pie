@@ -1,0 +1,25 @@
+{
+  "name": "A Pie — Vive tu barrio",
+  "short_name": "A Pie",
+  "description": "Descubre lo que tienes a pocos minutos caminando desde cualquier dirección en Tenerife.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF7F2",
+  "theme_color": "#1C7A8A",
+  "lang": "es",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

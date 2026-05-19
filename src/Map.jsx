@@ -27,7 +27,7 @@ const SUBCATEGORY_ICONS = {
   tienda:        '🏬',
   libreria:      '📚',
   ferreteria:    '🔧',
-  barberia:      '✂️',
+  peluqueria:    '✂️',
   floristeria:   '🌸',
   // Salud
   farmacia:      '💊',
@@ -122,7 +122,7 @@ export default function Map({ origin, isochrone, resources, selected, onSelect }
     if (!isochrone) return
     isoLayer.current?.remove()
     isoLayer.current = L.geoJSON(isochrone, {
-      style: { color: '#185FA5', fillColor: '#378ADD', fillOpacity: 0.12, weight: 2 },
+      style: { color: '#1C7A8A', fillColor: '#3FA0B0', fillOpacity: 0.12, weight: 2 },
     }).addTo(leaflet.current)
     leaflet.current.fitBounds(isoLayer.current.getBounds(), { padding: [40, 40] })
   }, [isochrone])
@@ -131,13 +131,17 @@ export default function Map({ origin, isochrone, resources, selected, onSelect }
     lineLayer.current?.remove()
     lineLayer.current = null
     if (selected && origin) {
-      const [lon, lat] = selected.location.coordinates
-      lineLayer.current = L.polyline(
-        [[origin.lat, origin.lon], [lat, lon]],
-        { color: '#185FA5', weight: 2, opacity: 0.9, dashArray: '8, 8', className: 'marching-line', pane: 'linePane' }
-      ).addTo(leaflet.current)
+      // Only draw the line if the selected item is still visible after filtering
+      const stillVisible = Object.values(resources).flat().some(item => item.id === selected.id)
+      if (stillVisible) {
+        const [lon, lat] = selected.location.coordinates
+        lineLayer.current = L.polyline(
+          [[origin.lat, origin.lon], [lat, lon]],
+          { color: '#1C7A8A', weight: 2, opacity: 0.9, dashArray: '8, 8', className: 'marching-line', pane: 'linePane' }
+        ).addTo(leaflet.current)
+      }
     }
-  }, [selected, origin])
+  }, [selected, origin, resources])
 
   useEffect(() => {
     if (!markerLayer.current) {
@@ -155,7 +159,7 @@ export default function Map({ origin, isochrone, resources, selected, onSelect }
   }, [resources, selected])
 
   return (
-    <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+    <div data-tour="map" style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
       <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
     </div>
   )

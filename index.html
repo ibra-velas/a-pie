@@ -3,8 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Accesibilidad Tenerife</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <title>A Pie — Vive tu barrio</title>
+    <meta name="description" content="Descubre todo lo que tienes a 15 minutos caminando desde cualquier dirección en Tenerife. Farmacias, comercios, parques, restaurantes — tu barrio caminable." />
+    <meta name="theme-color" content="#1C7A8A" />
+
+    <!-- Open Graph / Social sharing -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="A Pie — Vive tu barrio" />
+    <meta property="og:description" content="¿Qué tienes a 15 minutos caminando desde casa? Descubre tu barrio en Tenerife." />
+    <meta property="og:locale" content="es_ES" />
+    <meta property="og:image" content="/images/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="A Pie — Vive tu barrio" />
+    <meta name="twitter:description" content="¿Qué tienes a 15 minutos caminando desde casa? Descubre tu barrio en Tenerife." />
+    <meta name="twitter:image" content="/images/twitter-og-image.jpg" />
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" />
     <style>
       @keyframes march {
         to { stroke-dashoffset: -16; }
@@ -20,14 +45,14 @@
         position: absolute;
         inset: 0;
         border-radius: 50%;
-        background: #185FA5;
+        background: #1C7A8A;
         animation: origin-pulse 1.8s ease-out infinite;
       }
       .origin-dot {
         position: absolute;
         inset: 4px;
         border-radius: 50%;
-        background: #185FA5;
+        background: #1C7A8A;
         border: 2.5px solid white;
         box-shadow: 0 1px 6px rgba(0,0,0,0.35);
       }
