@@ -107,7 +107,7 @@ Carga ~12.000 recursos desde OpenStreetMap a la base de datos PostGIS.
 
 ## Autor / Author
 
-Desarrollado en Tenerife, Canarias.
+Desarrollado en Tenerife, Canarias. por  Ibrahim Velasquez. ibravhq@gmail.com 
 
 ---
 
