@@ -144,7 +144,7 @@ export default function Sidebar({
         const { latitude: lat, longitude: lon } = coords
         try {
           const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&zoom=10`,
             { headers: { 'Accept-Language': 'es' } }
           )
           const data = await res.json()
