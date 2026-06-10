@@ -7,12 +7,21 @@ export default async function handler(req, res) {
     format: 'json',
     limit: '1',
     countrycodes: 'es',
+    // Hard-restrict results to the Tenerife bbox (lon1,lat1,lon2,lat2)
+    viewbox: '-16.9,28.6,-16.1,27.9',
+    bounded: '1',
   })
 
-  const r = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
-    headers: { 'User-Agent': 'AccesibilidadTenerife/1.0' },
-  })
-  const results = await r.json()
+  let results
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+      headers: { 'User-Agent': 'APie-Tenerife/1.0 (ibravhq@gmail.com)' },
+    })
+    if (!r.ok) throw new Error(`Nominatim ${r.status}`)
+    results = await r.json()
+  } catch (e) {
+    return res.status(502).json({ error: 'Servicio de direcciones no disponible', detail: e.message })
+  }
 
   if (!results.length) return res.status(404).json({ error: 'Dirección no encontrada' })
 
