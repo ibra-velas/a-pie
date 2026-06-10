@@ -97,12 +97,15 @@ export default function App() {
   }
 
   useEffect(() => {
-    // App is mounted: fade out the static splash from index.html
+    // App is mounted: hold the splash ~1.2s so the brand registers
+    // (with a cached bundle it was gone before it could be seen)
     const splash = document.getElementById('splash')
     if (splash) {
-      splash.style.opacity = '0'
       splash.style.pointerEvents = 'none'
-      setTimeout(() => splash.remove(), 450)
+      setTimeout(() => {
+        splash.style.opacity = '0'
+        setTimeout(() => splash.remove(), 850)
+      }, 1200)
     }
     // Load La Laguna (Catedral) as default on first open
     const lat = 28.4869, lon = -16.3182
