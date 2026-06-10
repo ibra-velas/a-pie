@@ -133,7 +133,12 @@ export default function Sidebar({
 
   useEffect(() => {
     const el = selectedItemRef.current
-    if (!selected || !el) return
+    if (!selected) {
+      // Deselecting returns the panel to the search controls
+      if (isMobile) rootRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+    if (!el) return
     if (isMobile && rootRef.current) {
       // The collapsed sheet only shows the top of the panel, but the browser
       // thinks the whole panel is visible (it's translated, not clipped), so
@@ -418,14 +423,26 @@ export default function Sidebar({
                     <div style={{ fontSize: 12, color: '#9ca3af', flexShrink: 0 }}>{item.distance_m}m</div>
                   </button>
                   {isSelected && (
-                    <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
-                      display: 'block', padding: '5px 8px 7px',
+                    <div style={{
+                      display: 'flex', alignItems: 'stretch',
                       background: '#FBEFE5', borderRadius: '0 0 8px 8px',
-                      fontSize: 12, color: '#1C7A8A', textDecoration: 'none',
                       marginBottom: 2,
                     }}>
-                      📍 Ver en Google Maps →
-                    </a>
+                      <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
+                        flex: 1, padding: '5px 8px 7px',
+                        fontSize: 12, color: '#1C7A8A', textDecoration: 'none',
+                      }}>
+                        📍 Ver en Google Maps →
+                      </a>
+                      <button onClick={() => onSelect(null)}
+                        aria-label="Cerrar selección" title="Cerrar selección"
+                        style={{
+                          border: 'none', background: 'none', cursor: 'pointer',
+                          color: '#9ca3af', fontSize: 13, padding: '0 12px',
+                        }}>
+                        ✕
+                      </button>
+                    </div>
                   )}
                 </div>
               )

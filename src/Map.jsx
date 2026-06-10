@@ -89,6 +89,10 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
   const markerLayer = useRef(null)
   const originMarker = useRef(null)
   const lineLayer = useRef(null)
+  // Keep the latest onSelect reachable from the map click handler
+  // registered once at init
+  const onSelectRef = useRef(onSelect)
+  onSelectRef.current = onSelect
 
   useEffect(() => {
     leaflet.current = L.map(mapRef.current).setView([28.485, -16.320], 12)
@@ -97,6 +101,8 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     }).addTo(leaflet.current)
     leaflet.current.createPane('linePane').style.zIndex = 450
     leaflet.current.createPane('originPane').style.zIndex = 620
+    // Tapping empty map clears the selection (markers don't bubble here)
+    leaflet.current.on('click', () => onSelectRef.current(null))
     return () => leaflet.current.remove()
   }, [])
 
