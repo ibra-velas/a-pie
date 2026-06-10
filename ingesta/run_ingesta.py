@@ -3,7 +3,8 @@ import os
 import time
 import requests
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, text
+from psycopg2.extras import execute_values
+from sqlalchemy import create_engine
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
@@ -123,31 +124,39 @@ def parse_osm(elements: list[dict], category: str, subcategory: str) -> list[dic
     return rows
 
 
+UPSERT_SQL = """
+    INSERT INTO resource
+        (name, category, subcategory, location, address,
+         municipality, source, source_id, extra)
+    VALUES %s
+    ON CONFLICT (source, source_id) DO UPDATE SET
+        name         = EXCLUDED.name,
+        category     = EXCLUDED.category,
+        subcategory  = EXCLUDED.subcategory,
+        location     = EXCLUDED.location,
+        address      = EXCLUDED.address,
+        municipality = EXCLUDED.municipality,
+        extra        = EXCLUDED.extra,
+        updated_at   = now()
+"""
+
+UPSERT_TEMPLATE = (
+    "(%(name)s, %(category)s, %(subcategory)s, "
+    "ST_SetSRID(ST_MakePoint(%(lon)s, %(lat)s), 4326), "
+    "%(address)s, %(municipality)s, %(source)s, %(source_id)s, %(extra)s::jsonb)"
+)
+
+
 def upsert(rows: list[dict]):
     if not rows:
         return
+    payload = [{**row, "extra": json.dumps(row["extra"])} for row in rows]
+    # Batched multi-VALUES insert: one round trip per 500 rows instead of
+    # one per row — the remote pooler latency dominated ingestion time
     with ENGINE.begin() as conn:
-        for row in rows:
-            conn.execute(text("""
-                INSERT INTO resource
-                    (name, category, subcategory, location, address,
-                     municipality, source, source_id, extra)
-                VALUES (
-                    :name, :category, :subcategory,
-                    ST_SetSRID(ST_MakePoint(:lon, :lat), 4326),
-                    :address, :municipality,
-                    :source, :source_id, CAST(:extra AS jsonb)
-                )
-                ON CONFLICT (source, source_id) DO UPDATE SET
-                    name         = EXCLUDED.name,
-                    category     = EXCLUDED.category,
-                    subcategory  = EXCLUDED.subcategory,
-                    location     = EXCLUDED.location,
-                    address      = EXCLUDED.address,
-                    municipality = EXCLUDED.municipality,
-                    extra        = EXCLUDED.extra,
-                    updated_at   = now()
-            """), {**row, "extra": json.dumps(row["extra"])})
+        with conn.connection.cursor() as cur:
+            execute_values(cur, UPSERT_SQL, payload,
+                           template=UPSERT_TEMPLATE, page_size=500)
 
 
 def run():
