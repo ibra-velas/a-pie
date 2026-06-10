@@ -31,6 +31,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" />
     <style>
+      /* Global font: portaled content (bottom sheet) renders outside the
+         app shell div, so the font must live on body, not on the shell */
+      body {
+        margin: 0;
+        font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+        color: #2B2820;
+      }
       /* Visible focus for keyboard navigation only (not mouse clicks) */
       :focus-visible {
         outline: 2px solid #1C7A8A;
