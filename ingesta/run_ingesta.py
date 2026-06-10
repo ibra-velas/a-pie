@@ -45,13 +45,21 @@ OSM_SOURCES = [
     ("shop",    "bakery",         "comercio",   "panaderia"),
     ("shop",    "hairdresser",    "comercio",   "peluqueria"),
     ("shop",    "barber",         "comercio",   "peluqueria"),
+    ("shop",    "hardware",       "comercio",   "ferreteria"),
+    ("shop",    "doityourself",   "comercio",   "ferreteria"),
+    ("shop",    "greengrocer",    "comercio",   "fruteria"),
+    ("shop",    "butcher",        "comercio",   "carniceria"),
+    ("shop",    "seafood",        "comercio",   "pescaderia"),
+    ("shop",    "books",          "comercio",   "libreria"),
+    ("shop",    "florist",        "comercio",   "floristeria"),
+    ("amenity", "marketplace",    "comercio",   "mercado"),
     # cultura
     ("amenity", "library",        "cultura",    "biblioteca"),
     ("tourism", "museum",         "cultura",    "museo"),
     ("amenity", "theatre",        "cultura",    "teatro"),
     ("amenity", "cinema",         "cultura",    "cine"),
-    # transporte
-    ("highway", "bus_stop",       "transporte", "parada_bus"),
+    # transporte: parada_bus excluida a propósito — el sidebar no la muestra
+    # y eran ~4000 filas que dominaban el tiempo de ingesta
 ]
 
 
@@ -131,10 +139,14 @@ def upsert(rows: list[dict]):
                     :source, :source_id, CAST(:extra AS jsonb)
                 )
                 ON CONFLICT (source, source_id) DO UPDATE SET
-                    name       = EXCLUDED.name,
-                    location   = EXCLUDED.location,
-                    extra      = EXCLUDED.extra,
-                    updated_at = now()
+                    name         = EXCLUDED.name,
+                    category     = EXCLUDED.category,
+                    subcategory  = EXCLUDED.subcategory,
+                    location     = EXCLUDED.location,
+                    address      = EXCLUDED.address,
+                    municipality = EXCLUDED.municipality,
+                    extra        = EXCLUDED.extra,
+                    updated_at   = now()
             """), {**row, "extra": json.dumps(row["extra"])})
 
 
