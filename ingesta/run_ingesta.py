@@ -7,7 +7,8 @@ from sqlalchemy import create_engine, text
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 
-ENGINE = create_engine(os.environ["DATABASE_URL"])
+# .strip() guards against trailing newlines pasted into the GitHub secret
+ENGINE = create_engine(os.environ["DATABASE_URL"].strip())
 
 TENERIFE_BBOX = dict(lat_min=27.9, lat_max=28.6, lon_min=-16.9, lon_max=-16.1)
 
