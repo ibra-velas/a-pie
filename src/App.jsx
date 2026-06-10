@@ -97,6 +97,13 @@ export default function App() {
   }
 
   useEffect(() => {
+    // App is mounted: fade out the static splash from index.html
+    const splash = document.getElementById('splash')
+    if (splash) {
+      splash.style.opacity = '0'
+      splash.style.pointerEvents = 'none'
+      setTimeout(() => splash.remove(), 450)
+    }
     // Load La Laguna (Catedral) as default on first open
     const lat = 28.4869, lon = -16.3182
     setOrigin({ lat, lon })
