@@ -217,7 +217,8 @@ export default function Sidebar({
             style={{
               display: 'block',
               width: '100%',
-              maxWidth: 320,
+              // Mobile: the 50vh panel is scarce — don't let the logo eat half of it
+              maxWidth: isMobile ? 210 : 320,
               height: 'auto',
             }}
           />
@@ -464,6 +465,20 @@ export default function Sidebar({
           </div>
         </div>
       </div>
+
+      {/* Mobile: fade pinned to the panel's bottom edge hinting there is
+          more content to scroll — without it the 50vh cut looks broken */}
+      {isMobile && (
+        <div aria-hidden="true" style={{
+          position: 'sticky',
+          bottom: 0,
+          height: 26,
+          marginTop: -26,
+          flexShrink: 0,
+          background: 'linear-gradient(rgba(250,247,242,0), #FAF7F2)',
+          pointerEvents: 'none',
+        }} />
+      )}
     </div>
   )
 }
