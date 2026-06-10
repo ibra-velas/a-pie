@@ -129,10 +129,20 @@ export default function Sidebar({
   const [filtersOpen, setFiltersOpen] = useState(true)
   const [selectedZone, setSelectedZone] = useState(null)
   const selectedItemRef = useRef(null)
+  const rootRef = useRef(null)
 
   useEffect(() => {
-    if (selected && selectedItemRef.current) {
-      selectedItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    const el = selectedItemRef.current
+    if (!selected || !el) return
+    if (isMobile && rootRef.current) {
+      // The collapsed sheet only shows the top of the panel, but the browser
+      // thinks the whole panel is visible (it's translated, not clipped), so
+      // scrollIntoView does nothing. Scroll the item to the top explicitly.
+      const root = rootRef.current
+      const top = el.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop
+      root.scrollTo({ top: Math.max(0, top - 10), behavior: 'smooth' })
+    } else {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
   }, [selected])
 
@@ -194,7 +204,7 @@ export default function Sidebar({
   )
 
   return (
-    <div style={{
+    <div ref={rootRef} style={{
       width: isMobile ? '100%' : 300,
       display: 'flex',
       flexDirection: 'column',
