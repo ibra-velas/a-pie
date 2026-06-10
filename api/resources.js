@@ -1,6 +1,7 @@
 import './_load-env.js'
 import { createClient } from '@supabase/supabase-js'
 import { fetchIsochrone } from './_isochrone-fetch.js'
+import { validateQuery } from './_validate.js'
 
 const supabase = createClient(
   process.env.SUPABASE_REST_URL || process.env.SUPABASE_URL,
@@ -8,8 +9,9 @@ const supabase = createClient(
 )
 
 export default async function handler(req, res) {
-  const { lat, lon, minutes = '10' } = req.query
-  if (!lat || !lon) return res.status(400).json({ error: 'Missing lat/lon' })
+  const v = validateQuery(req.query)
+  if (v.error) return res.status(400).json({ error: v.error })
+  const { lat, lon, minutes } = v
 
   let polygon
   try {
@@ -21,8 +23,8 @@ export default async function handler(req, res) {
 
   const { data, error } = await supabase.rpc('resources_within', {
     polygon_geojson: JSON.stringify(polygon),
-    origin_lat: parseFloat(lat),
-    origin_lon: parseFloat(lon),
+    origin_lat: lat,
+    origin_lon: lon,
   })
 
   if (error) {
@@ -47,8 +49,8 @@ export default async function handler(req, res) {
   }
 
   res.json({
-    origin: { lat: parseFloat(lat), lon: parseFloat(lon) },
-    minutes: parseInt(minutes),
+    origin: { lat, lon },
+    minutes,
     polygon,
     total: data.length,
     by_subcategory,
