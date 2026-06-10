@@ -11,3 +11,4 @@ dist/
 *.md
 *.txt
 !README.md
+!ingesta/requirements.txt
