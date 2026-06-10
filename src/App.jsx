@@ -17,6 +17,7 @@ export default function App() {
   const [activeSubs, setActiveSubs] = useState(new Set(['bar', 'cafe', 'comida_rapida']))
   const [showLegal, setShowLegal] = useState(false)
   const debounceRef = useRef(null)
+  const abortRef = useRef(null)
   const isMobile = useIsMobile()
 
   function toggleSub(sub) {
@@ -46,53 +47,56 @@ export default function App() {
     setError(null)
     try {
       const geoRes = await fetch(`/api/geocode?q=${encodeURIComponent(address)}`)
-      if (!geoRes.ok) { setError('Dirección no encontrada'); return }
+      if (!geoRes.ok) { setError('Dirección no encontrada'); setLoading(false); return }
       const { lat, lon } = await geoRes.json()
       setOrigin({ lat, lon })
       await fetchResources(lat, lon, minutes)
     } catch {
       setError('Error de conexión')
-    } finally {
       setLoading(false)
     }
   }
 
   async function locate(lat, lon) {
+    setOrigin({ lat, lon })
+    await fetchResources(lat, lon, minutes)
+  }
+
+  // Each call aborts the previous in-flight request so a slow stale
+  // response can never overwrite a newer one (slider race condition)
+  async function fetchResources(lat, lon, mins) {
+    abortRef.current?.abort()
+    const ctrl = new AbortController()
+    abortRef.current = ctrl
     setLoading(true)
     setError(null)
     try {
-      setOrigin({ lat, lon })
-      await fetchResources(lat, lon, minutes)
-    } catch {
-      setError('Error de conexión')
+      const res = await fetch(`/api/resources?lat=${lat}&lon=${lon}&minutes=${mins}`, { signal: ctrl.signal })
+      if (!res.ok) { setError('Error cargando recursos'); return }
+      const data = await res.json()
+      setIsochrone(data.polygon)
+      setResources(data.by_subcategory)
+      setSelected(null)
+    } catch (e) {
+      if (e.name !== 'AbortError') setError('Error de conexión')
     } finally {
-      setLoading(false)
+      // Only the still-current request may clear the spinner
+      if (abortRef.current === ctrl) setLoading(false)
     }
-  }
-
-  async function fetchResources(lat, lon, mins) {
-    const res = await fetch(`/api/resources?lat=${lat}&lon=${lon}&minutes=${mins}`)
-    if (!res.ok) { setError('Error cargando recursos'); return }
-    const data = await res.json()
-    setIsochrone(data.polygon)
-    setResources(data.by_subcategory)
-    setSelected(null)
   }
 
   useEffect(() => {
     // Load La Laguna (Catedral) as default on first open
     const lat = 28.4869, lon = -16.3182
     setOrigin({ lat, lon })
-    setLoading(true)
-    fetchResources(lat, lon, minutes).finally(() => setLoading(false))
+    fetchResources(lat, lon, minutes)
   }, [])
 
   useEffect(() => {
     if (!origin) return
     clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
-      setLoading(true)
-      fetchResources(origin.lat, origin.lon, minutes).finally(() => setLoading(false))
+      fetchResources(origin.lat, origin.lon, minutes)
     }, 500)
   }, [minutes])
 
