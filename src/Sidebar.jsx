@@ -131,6 +131,9 @@ export default function Sidebar({
   const selectedItemRef = useRef(null)
   const rootRef = useRef(null)
 
+  // Mobile reads at arm's length: bump every font size by 2px
+  const fz = base => (isMobile ? base + 2 : base)
+
   useEffect(() => {
     const el = selectedItemRef.current
     if (!selected) {
@@ -250,12 +253,12 @@ export default function Sidebar({
               background: '#FBEFE5',
               border: '1px solid rgba(216, 124, 63, 0.25)',
               borderRadius: 99,
-              fontSize: 11,
+              fontSize: fz(11),
               fontWeight: 600,
               color: '#B65F26',
               letterSpacing: '0.01em',
             }}>
-              <span style={{ fontSize: 12 }}>🗺️</span>
+              <span style={{ fontSize: fz(12) }}>🗺️</span>
               {totalCount} lugares en {minutes} min a pie
             </div>
           )}
@@ -265,7 +268,7 @@ export default function Sidebar({
         <div data-tour="address" style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
           <button onClick={handleLocate} disabled={locating || loading} title="Usar mi ubicación"
             aria-label="Usar mi ubicación"
-            style={{ padding: '7px 10px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 8, cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
+            style={{ padding: '7px 10px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 8, cursor: 'pointer', fontSize: fz(15), flexShrink: 0 }}>
             {locating ? '⏳' : '📍'}
           </button>
           <input
@@ -274,12 +277,14 @@ export default function Sidebar({
             onKeyDown={e => e.key === 'Enter' && onSearch(address)}
             placeholder="Tu dirección..."
             title="Escribe una dirección en Tenerife y pulsa Enter"
-            style={{ flex: 1, padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 8, fontSize: 13 }}
+            style={{ flex: 1, padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 8, minWidth: 0,
+              // 16px on mobile: anything smaller triggers iOS auto-zoom on focus
+              fontSize: isMobile ? 16 : 13 }}
           />
           <button onClick={() => onSearch(address)} disabled={loading}
             title="Buscar lugares en esta dirección"
             aria-label="Buscar lugares en esta dirección"
-            style={{ padding: '7px 12px', background: '#1C7A8A', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}>
+            style={{ padding: '7px 12px', background: '#1C7A8A', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: fz(13) }}>
             {loading ? '...' : '→'}
           </button>
         </div>
@@ -295,7 +300,7 @@ export default function Sidebar({
                   onClick={() => setSelectedZone(active ? null : zone)}
                   title={`Ver ciudades de la zona ${zone}`}
                   style={{
-                    fontSize: 11, padding: '3px 10px', borderRadius: 99, cursor: 'pointer',
+                    fontSize: fz(11), padding: '3px 10px', borderRadius: 99, cursor: 'pointer',
                     border: `1px solid ${active ? '#1C7A8A' : '#d1d5db'}`,
                     background: active ? '#1C7A8A' : '#f9fafb',
                     color: active ? '#fff' : '#374151',
@@ -314,7 +319,7 @@ export default function Sidebar({
                   onClick={() => { setAddress(city.label); onLocate(city.lat, city.lon) }}
                   disabled={loading}
                   title={`Centrar el mapa en ${city.label}`}
-                  style={{ fontSize: 11, padding: '3px 9px', borderRadius: 99, border: '1px solid #d1d5db', background: '#FBEFE5', color: '#1C7A8A', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  style={{ fontSize: fz(11), padding: '3px 9px', borderRadius: 99, border: '1px solid #d1d5db', background: '#FBEFE5', color: '#1C7A8A', cursor: 'pointer', whiteSpace: 'nowrap' }}>
                   {city.label}
                 </button>
               ))}
@@ -322,12 +327,12 @@ export default function Sidebar({
           )}
         </div>
 
-        {error && <div style={{ fontSize: 12, color: '#D85A30', marginBottom: 8 }}>{error}</div>}
+        {error && <div style={{ fontSize: fz(12), color: '#D85A30', marginBottom: 8 }}>{error}</div>}
 
         {/* Minute slider */}
         <div data-tour="minutes" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}
              title="Cuántos minutos estás dispuesto a caminar">
-          <span style={{ fontSize: 14, fontWeight: 700, color: '#1C7A8A', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{minutes} min a pie</span>
+          <span style={{ fontSize: fz(14), fontWeight: 700, color: '#1C7A8A', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{minutes} min a pie</span>
           <input type="range" min="5" max="30" step="5" value={minutes}
             onChange={e => onMinutesChange(Number(e.target.value))} style={{ flex: 1 }}
             aria-label="Minutos dispuesto a caminar"
@@ -338,7 +343,7 @@ export default function Sidebar({
         <button onClick={() => setFiltersOpen(o => !o)}
           data-tour="filters"
           title="Mostrar u ocultar filtros por tipo de lugar"
-          style={{ width: '100%', padding: '5px 0', fontSize: 12, color: '#6b7280', background: 'none', border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer' }}>
+          style={{ width: '100%', padding: '5px 0', fontSize: fz(12), color: '#6b7280', background: 'none', border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer' }}>
           {filtersOpen ? '▲ Ocultar filtros' : '▼ Filtrar por tipo'}
         </button>
 
@@ -348,13 +353,13 @@ export default function Sidebar({
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
               <button onClick={() => onToggleGroup(ALL_SUBS)}
                 title="Activar o desactivar todos los filtros a la vez"
-                style={{ fontSize: 11, padding: '2px 10px', borderRadius: 99, border: '1px solid #d1d5db', background: 'none', color: '#6b7280', cursor: 'pointer' }}>
+                style={{ fontSize: fz(11), padding: '2px 10px', borderRadius: 99, border: '1px solid #d1d5db', background: 'none', color: '#6b7280', cursor: 'pointer' }}>
                 {ALL_SUBS.every(s => activeSubs.has(s)) ? 'Desmarcar todo' : 'Marcar todo'}
               </button>
             </div>
             {PILL_GROUPS.map(group => (
               <div key={group.label}>
-                <div style={{ fontSize: 10, fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>
+                <div style={{ fontSize: fz(10), fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>
                   {group.label}
                 </div>
                 <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
@@ -367,7 +372,7 @@ export default function Sidebar({
                       <button key={pill.id} onClick={() => handlePillClick(pill)}
                         title={active ? `Ocultar ${pill.label.toLowerCase()} del mapa` : `Mostrar ${pill.label.toLowerCase()} en el mapa`}
                         style={{
-                        fontSize: 11, padding: '3px 9px', borderRadius: 99,
+                        fontSize: fz(11), padding: '3px 9px', borderRadius: 99,
                         border: `1px solid ${active ? group.color : '#d1d5db'}`,
                         background: active ? group.color + '22' : 'transparent',
                         color: active ? group.color : '#9ca3af',
@@ -387,7 +392,7 @@ export default function Sidebar({
       {/* ── Results list ── */}
       <div style={{ flex: 1, overflowY: isMobile ? 'visible' : 'auto', padding: '10px 14px' }}>
         {totalCount > 0 && (
-          <div style={{ fontSize: 11, color: '#9ca3af', marginBottom: 10 }}>
+          <div style={{ fontSize: fz(11), color: '#9ca3af', marginBottom: 10 }}>
             {filteredCount === totalCount
               ? `${totalCount} lugares en ${minutes} min a pie`
               : `${filteredCount} de ${totalCount} · ${minutes} min a pie`}
@@ -396,7 +401,7 @@ export default function Sidebar({
 
         {resultGroups.map(({ sub, label, color, items }) => (
           <div key={sub} style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+            <div style={{ fontSize: fz(11), fontWeight: 600, color, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
               {label} · {items.length}
             </div>
             {items.map(item => {
@@ -417,10 +422,10 @@ export default function Sidebar({
                   }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: CATEGORY_COLORS[item.category] ?? color, flexShrink: 0 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
-                      <div style={{ fontSize: 11, color: '#9ca3af' }}>{item.address || item.subcategory}</div>
+                      <div style={{ fontSize: fz(13), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
+                      <div style={{ fontSize: fz(11), color: '#9ca3af' }}>{item.address || item.subcategory}</div>
                     </div>
-                    <div style={{ fontSize: 12, color: '#9ca3af', flexShrink: 0 }}>{item.distance_m}m</div>
+                    <div style={{ fontSize: fz(12), color: '#9ca3af', flexShrink: 0 }}>{item.distance_m}m</div>
                   </button>
                   {isSelected && (
                     <div style={{
@@ -430,7 +435,7 @@ export default function Sidebar({
                     }}>
                       <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
                         flex: 1, padding: '5px 8px 7px',
-                        fontSize: 12, color: '#1C7A8A', textDecoration: 'none',
+                        fontSize: fz(12), color: '#1C7A8A', textDecoration: 'none',
                       }}>
                         📍 Ver en Google Maps →
                       </a>
@@ -438,7 +443,7 @@ export default function Sidebar({
                         aria-label="Cerrar selección" title="Cerrar selección"
                         style={{
                           border: 'none', background: 'none', cursor: 'pointer',
-                          color: '#9ca3af', fontSize: 13, padding: '0 12px',
+                          color: '#9ca3af', fontSize: fz(13), padding: '0 12px',
                         }}>
                         ✕
                       </button>
@@ -455,7 +460,7 @@ export default function Sidebar({
           marginTop: 24,
           paddingTop: 14,
           borderTop: '1px solid rgba(28,122,138,0.12)',
-          fontSize: 10.5,
+          fontSize: fz(10.5),
           color: '#8A7F70',
           lineHeight: 1.6,
         }}>
@@ -466,7 +471,7 @@ export default function Sidebar({
               border: 'none',
               padding: 0,
               color: '#1C7A8A',
-              fontSize: 11,
+              fontSize: fz(11),
               cursor: 'pointer',
               textDecoration: 'underline',
               textDecorationColor: 'rgba(28,122,138,0.35)',
@@ -480,7 +485,7 @@ export default function Sidebar({
             href="mailto:ibravhq@gmail.com?subject=A%20Pie%20—%20Contacto"
             style={{
               color: '#1C7A8A',
-              fontSize: 11,
+              fontSize: fz(11),
               textDecoration: 'underline',
               textDecorationColor: 'rgba(28,122,138,0.35)',
             }}
