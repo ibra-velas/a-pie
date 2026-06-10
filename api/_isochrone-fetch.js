@@ -49,6 +49,8 @@ export async function fetchIsochrone(lat, lon, minutes) {
       locations: [[parseFloat(lon), parseFloat(lat)]],
       range: [mins * 60],
       range_type: 'time',
+      // Without this, foot-walking follows ferry routes out to sea
+      options: { avoid_features: ['ferries'] },
     }),
   })
 
