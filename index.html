@@ -31,6 +31,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" />
     <style>
+      /* Visible focus for keyboard navigation only (not mouse clicks) */
+      :focus-visible {
+        outline: 2px solid #1C7A8A;
+        outline-offset: 2px;
+      }
       @keyframes march {
         to { stroke-dashoffset: -16; }
       }

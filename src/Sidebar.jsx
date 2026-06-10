@@ -247,6 +247,7 @@ export default function Sidebar({
         {/* Search row */}
         <div data-tour="address" style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
           <button onClick={handleLocate} disabled={locating || loading} title="Usar mi ubicación"
+            aria-label="Usar mi ubicación"
             style={{ padding: '7px 10px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 8, cursor: 'pointer', fontSize: 15, flexShrink: 0 }}>
             {locating ? '⏳' : '📍'}
           </button>
@@ -260,6 +261,7 @@ export default function Sidebar({
           />
           <button onClick={() => onSearch(address)} disabled={loading}
             title="Buscar lugares en esta dirección"
+            aria-label="Buscar lugares en esta dirección"
             style={{ padding: '7px 12px', background: '#1C7A8A', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: 13 }}>
             {loading ? '...' : '→'}
           </button>
@@ -311,6 +313,7 @@ export default function Sidebar({
           <span style={{ fontSize: 14, fontWeight: 700, color: '#1C7A8A', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{minutes} min a pie</span>
           <input type="range" min="5" max="30" step="5" value={minutes}
             onChange={e => onMinutesChange(Number(e.target.value))} style={{ flex: 1 }}
+            aria-label="Minutos dispuesto a caminar"
             title="Desliza para cambiar cuántos minutos quieres caminar" />
         </div>
 
@@ -385,12 +388,13 @@ export default function Sidebar({
               const isSelected = selected?.id === item.id
               return (
                 <div key={item.id} ref={isSelected ? selectedItemRef : null}>
-                  <div onClick={() => onSelect(item)}
+                  <button onClick={() => onSelect(item)}
                     title="Pincha para ver en el mapa"
                     style={{
-                    display: 'flex', alignItems: 'center', gap: 10,
+                    display: 'flex', alignItems: 'center', gap: 10, width: '100%',
                     padding: '7px 8px', borderRadius: isSelected ? '8px 8px 0 0' : 8,
-                    cursor: 'pointer',
+                    cursor: 'pointer', border: 'none', textAlign: 'left',
+                    font: 'inherit', color: 'inherit',
                     background: isSelected ? '#FBEFE5' : 'transparent',
                     marginBottom: isSelected ? 0 : 2,
                   }}>
@@ -400,7 +404,7 @@ export default function Sidebar({
                       <div style={{ fontSize: 11, color: '#9ca3af' }}>{item.address || item.subcategory}</div>
                     </div>
                     <div style={{ fontSize: 12, color: '#9ca3af', flexShrink: 0 }}>{item.distance_m}m</div>
-                  </div>
+                  </button>
                   {isSelected && (
                     <a href={mapsUrl} target="_blank" rel="noopener noreferrer" style={{
                       display: 'block', padding: '5px 8px 7px',
