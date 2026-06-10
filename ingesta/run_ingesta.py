@@ -91,10 +91,13 @@ def parse_osm(elements: list[dict], category: str, subcategory: str) -> list[dic
             continue
 
         tags = el.get("tags", {})
-        name = tags.get("name") or tags.get("name:es") or subcategory.replace("_", " ").title()
+        # Keep OSM names verbatim — .title() mangles "McDonald's" → "Mcdonald'S".
+        # Only the subcategory fallback (no name in OSM) gets title-cased.
+        name = tags.get("name") or tags.get("name:es")
+        name = name.strip() if name else subcategory.replace("_", " ").title()
 
         rows.append({
-            "name":        name.strip().title(),
+            "name":        name,
             "category":    category,
             "subcategory": subcategory,
             "lat":         lat,
