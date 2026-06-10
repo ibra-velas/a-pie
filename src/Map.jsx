@@ -89,8 +89,11 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
   const markerLayer = useRef(null)
   const originMarker = useRef(null)
   const lineLayer = useRef(null)
-  // Keep the latest onSelect reachable from the map click handler
-  // registered once at init
+  // Plain object on purpose: `Map` here resolves to this component,
+  // not the JS built-in
+  const markersById = useRef({})
+  const selectedIdRef = useRef(null)
+  // Keep the latest onSelect reachable from handlers registered once
   const onSelectRef = useRef(onSelect)
   onSelectRef.current = onSelect
 
@@ -153,20 +156,38 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     }
   }, [selected, origin, resources])
 
+  // Rebuild markers only when the resource set changes — with hundreds of
+  // markers, recreating them on every selection makes taps janky
   useEffect(() => {
     if (!markerLayer.current) {
       markerLayer.current = L.layerGroup().addTo(leaflet.current)
     }
     markerLayer.current.clearLayers()
+    markersById.current = {}
     Object.values(resources).flat().forEach(item => {
       const [lon, lat] = item.location.coordinates
-      const isSelected = selected?.id === item.id
-      L.marker([lat, lon], { icon: makeIcon(item, isSelected) })
-        .on('click', () => onSelect(item))
+      const marker = L.marker([lat, lon], { icon: makeIcon(item, item.id === selectedIdRef.current) })
+        .on('click', () => onSelectRef.current(item))
         .bindTooltip(item.name, { direction: 'top', offset: [0, 0] })
         .addTo(markerLayer.current)
+      markersById.current[item.id] = { marker, item }
     })
-  }, [resources, selected])
+  }, [resources])
+
+  // Selection change: restyle just the previous and the new marker
+  useEffect(() => {
+    const prev = markersById.current[selectedIdRef.current]
+    if (prev) {
+      prev.marker.setIcon(makeIcon(prev.item, false))
+      prev.marker.setZIndexOffset(0)
+    }
+    const next = selected ? markersById.current[selected.id] : null
+    if (next) {
+      next.marker.setIcon(makeIcon(next.item, true))
+      next.marker.setZIndexOffset(1000)
+    }
+    selectedIdRef.current = selected?.id ?? null
+  }, [selected])
 
   return (
     <div data-tour="map" style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>

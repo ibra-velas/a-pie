@@ -15,6 +15,11 @@ TENERIFE_BBOX = dict(lat_min=27.9, lat_max=28.6, lon_min=-16.9, lon_max=-16.1)
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
+# Subcategories where unnamed OSM elements are junk (e.g. leisure=
+# swimming_pool matches thousands of private backyard pools — public
+# pools virtually always carry a name)
+NAME_REQUIRED = {"piscina"}
+
 # Each entry: (osm_key, osm_value, category, subcategory)
 OSM_SOURCES = [
     # salud
@@ -104,6 +109,8 @@ def parse_osm(elements: list[dict], category: str, subcategory: str) -> list[dic
         # Keep OSM names verbatim — .title() mangles "McDonald's" → "Mcdonald'S".
         # Only the subcategory fallback (no name in OSM) gets title-cased.
         name = tags.get("name") or tags.get("name:es")
+        if not name and subcategory in NAME_REQUIRED:
+            continue
         name = name.strip() if name else subcategory.replace("_", " ").title()
 
         rows.append({
