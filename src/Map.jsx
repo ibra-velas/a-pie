@@ -82,7 +82,7 @@ function makeIcon(item, isSelected) {
   })
 }
 
-export default function Map({ origin, isochrone, resources, selected, onSelect }) {
+export default function Map({ origin, isochrone, resources, selected, onSelect, padBottom = 40 }) {
   const mapRef = useRef(null)
   const leaflet = useRef(null)
   const isoLayer = useRef(null)
@@ -124,7 +124,11 @@ export default function Map({ origin, isochrone, resources, selected, onSelect }
     isoLayer.current = L.geoJSON(isochrone, {
       style: { color: '#1C7A8A', fillColor: '#3FA0B0', fillOpacity: 0.12, weight: 2 },
     }).addTo(leaflet.current)
-    leaflet.current.fitBounds(isoLayer.current.getBounds(), { padding: [40, 40] })
+    // Extra bottom padding keeps the isochrone above the mobile bottom sheet
+    leaflet.current.fitBounds(isoLayer.current.getBounds(), {
+      paddingTopLeft: [40, 40],
+      paddingBottomRight: [40, padBottom],
+    })
   }, [isochrone])
 
   useEffect(() => {

@@ -196,11 +196,12 @@ export default function Sidebar({
   return (
     <div style={{
       width: isMobile ? '100%' : 300,
-      maxHeight: isMobile ? '50vh' : 'none',
       display: 'flex',
       flexDirection: 'column',
+      // Mobile: fills the bottom sheet (the sheet controls the height)
+      flex: isMobile ? 1 : undefined,
+      minHeight: isMobile ? 0 : undefined,
       borderRight: isMobile ? 'none' : '1px solid #e5e7eb',
-      borderBottom: isMobile ? '1px solid #e5e7eb' : 'none',
       background: '#FAF7F2',
       // Mobile: single scroll zone so pill groups never get clipped
       overflowY: isMobile ? 'auto' : 'hidden',
@@ -465,20 +466,6 @@ export default function Sidebar({
           </div>
         </div>
       </div>
-
-      {/* Mobile: fade pinned to the panel's bottom edge hinting there is
-          more content to scroll — without it the 50vh cut looks broken */}
-      {isMobile && (
-        <div aria-hidden="true" style={{
-          position: 'sticky',
-          bottom: 0,
-          height: 26,
-          marginTop: -26,
-          flexShrink: 0,
-          background: 'linear-gradient(rgba(250,247,242,0), #FAF7F2)',
-          pointerEvents: 'none',
-        }} />
-      )}
     </div>
   )
 }

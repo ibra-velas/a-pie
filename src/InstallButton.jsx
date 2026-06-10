@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-export default function InstallButton() {
+export default function InstallButton({ isMobile = false }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [installed, setInstalled] = useState(false)
 
@@ -38,8 +38,8 @@ export default function InstallButton() {
       title="Instalar A Pie en tu dispositivo"
       style={{
         position: 'fixed',
-        bottom: 18,
-        right: 18,
+        // Mobile: top corner — the bottom edge belongs to the sheet
+        ...(isMobile ? { top: 14, right: 14 } : { bottom: 18, right: 18 }),
         zIndex: 9999,
         display: 'inline-flex',
         alignItems: 'center',
