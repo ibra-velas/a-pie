@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { CATEGORY_COLORS } from './Map'
+import { CATEGORY_COLORS, GROUP_COLORS, colorFor } from './Map'
 
 // Stroke icons instead of emoji: consistent across devices and on-palette
 function LocateIcon({ spinning }) {
@@ -31,7 +31,7 @@ function SearchIcon() {
 export const PILL_GROUPS = [
   {
     label: 'Comida & Bebida',
-    color: '#C4622D',
+    color: GROUP_COLORS.comida,
     pills: [
       { id: 'restaurante',   label: 'Restaurantes' },
       { id: 'bar',           label: 'Bares' },
@@ -47,7 +47,7 @@ export const PILL_GROUPS = [
   },
   {
     label: 'Tiendas',
-    color: '#2E86AB',
+    color: GROUP_COLORS.tiendas,
     pills: [
       { id: 'supermercado',  label: 'Supermercados' },
       { id: 'tienda',        label: 'Tiendas' },
@@ -487,7 +487,7 @@ export default function Sidebar({
                     background: isSelected ? '#FBEFE5' : 'transparent',
                     marginBottom: isSelected ? 0 : 2,
                   }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: CATEGORY_COLORS[item.category] ?? color, flexShrink: 0 }} />
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: colorFor(item), flexShrink: 0 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: fz(13), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</div>
                       <div style={{ fontSize: fz(11), color: '#9ca3af' }}>{item.address || item.subcategory}</div>

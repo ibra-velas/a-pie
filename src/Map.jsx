@@ -10,6 +10,41 @@ export const CATEGORY_COLORS = {
   cultura:    '#C2436A',
 }
 
+// Display colors follow the *sidebar groups*, not the DB category: the DB
+// classifies heladeria as comercio but restaurante as ocio, so food showed
+// in two different colors. The DB/ingestion stays untouched on purpose —
+// this remap is frontend-only. Subcategories not listed here fall back to
+// their CATEGORY_COLORS entry.
+export const GROUP_COLORS = {
+  comida:  '#C4622D',
+  tiendas: '#2E86AB',
+}
+
+const SUB_COLORS = {
+  // Comida & Bebida
+  restaurante:   GROUP_COLORS.comida,
+  bar:           GROUP_COLORS.comida,
+  cafe:          GROUP_COLORS.comida,
+  comida_rapida: GROUP_COLORS.comida,
+  panaderia:     GROUP_COLORS.comida,
+  heladeria:     GROUP_COLORS.comida,
+  carniceria:    GROUP_COLORS.comida,
+  fruteria:      GROUP_COLORS.comida,
+  pescaderia:    GROUP_COLORS.comida,
+  mercado:       GROUP_COLORS.comida,
+  // Tiendas
+  supermercado:  GROUP_COLORS.tiendas,
+  tienda:        GROUP_COLORS.tiendas,
+  libreria:      GROUP_COLORS.tiendas,
+  ferreteria:    GROUP_COLORS.tiendas,
+  peluqueria:    GROUP_COLORS.tiendas,
+  floristeria:   GROUP_COLORS.tiendas,
+}
+
+export function colorFor(item) {
+  return SUB_COLORS[item.subcategory] ?? CATEGORY_COLORS[item.category] ?? '#888'
+}
+
 const SUBCATEGORY_ICONS = {
   // Comida & Bebida
   restaurante:   '🍽️',
@@ -55,7 +90,7 @@ const SUBCATEGORY_ICONS = {
 
 function makeIcon(item, isSelected) {
   const emoji = SUBCATEGORY_ICONS[item.subcategory] ?? '📍'
-  const color = CATEGORY_COLORS[item.category] ?? '#888'
+  const color = colorFor(item)
   const size = isSelected ? 26 : 20
   const fontSize = isSelected ? 11 : 9
   const border = isSelected ? `3px solid #fff` : `2px solid rgba(255,255,255,0.8)`

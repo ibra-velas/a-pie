@@ -41,6 +41,8 @@ Always cast to `::geography` for distances — without it the result is in degre
 
 Six categories (colors in `src/Map.jsx` `CATEGORY_COLORS`): `salud` #D85A30, `educacion` #1D9E75, `ocio` #7F77DD, `transporte` #BA7517, `comercio` #E0A020, `cultura` #C2436A.
 
+**Display colors don't always match the DB category.** `colorFor(item)` in `Map.jsx` is the single source for marker/list-dot colors: food and shop subcategories are remapped to the sidebar group colors (`GROUP_COLORS`: comida #C4622D, tiendas #2E86AB) because the DB classifies heladeria as comercio but restaurante as ocio. Frontend-only remap — don't "fix" it in ingestion, and route any new color through `colorFor`.
+
 The app filters and groups by **subcategory** (not category). Sidebar pill config lives in `src/Sidebar.jsx` `PILL_GROUPS`. Notes:
 - `barberia` was merged into `peluqueria` (June 2026) — never reintroduce `barberia`.
 - `transporte`/`parada_bus` is deliberately gone: absent from the sidebar, excluded from ingestion, and its rows deleted from the DB.
