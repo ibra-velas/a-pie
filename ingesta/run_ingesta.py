@@ -69,7 +69,13 @@ OSM_SOURCES = [
 ]
 
 
-def fetch_osm(key: str, value: str) -> list[dict]:
+def fetch_osm(key: str, value: str) -> list[dict] | None:
+    """Returns the element list, or None if Overpass failed after retries.
+
+    The distinction matters: an empty list is a legitimate "OSM has none"
+    (its stale rows deserve purging), while None means "we don't know" —
+    and the purge must be skipped for the whole run.
+    """
     bbox = "27.9,-16.9,28.6,-16.1"
     query = f"""
     [out:json][timeout:60];
@@ -89,7 +95,7 @@ def fetch_osm(key: str, value: str) -> list[dict]:
         except Exception as e:
             print(f"  Request error: {e} (attempt {attempt+1})")
         time.sleep(10)
-    return []
+    return None
 
 
 def parse_osm(elements: list[dict], category: str, subcategory: str) -> list[dict]:
@@ -166,14 +172,60 @@ def upsert(rows: list[dict]):
                            template=UPSERT_TEMPLATE, page_size=500)
 
 
+# Ghost purge: every upserted row refreshes updated_at, so rows OSM no
+# longer returns go stale. 21 days = 3 missed weekly runs of tolerance.
+PURGE_THRESHOLD = "21 days"
+# If the purge would delete more than this fraction of the table, assume
+# something went wrong upstream (partial Overpass data, broken runs) and
+# abort instead of mass-deleting.
+PURGE_MAX_FRACTION = 0.20
+
+
+def purge_stale():
+    with ENGINE.begin() as conn:
+        with conn.connection.cursor() as cur:
+            cur.execute("SELECT count(*) FROM resource WHERE source = 'osm'")
+            total = cur.fetchone()[0]
+            cur.execute(
+                "SELECT count(*) FROM resource WHERE source = 'osm' "
+                "AND updated_at < now() - interval %s", (PURGE_THRESHOLD,))
+            stale = cur.fetchone()[0]
+            if stale == 0:
+                print("Purge: nothing stale")
+                return
+            if total and stale / total > PURGE_MAX_FRACTION:
+                print(f"Purge ABORTED: {stale}/{total} rows stale "
+                      f"(> {PURGE_MAX_FRACTION:.0%}) — check the ingestion")
+                return
+            cur.execute(
+                "DELETE FROM resource WHERE source = 'osm' "
+                "AND updated_at < now() - interval %s", (PURGE_THRESHOLD,))
+            print(f"Purge: {stale} stale rows deleted (gone from OSM)")
+
+
 def run():
+    all_fetches_ok = True
     for key, value, category, subcategory in OSM_SOURCES:
         print(f"Fetching OSM {key}={value}...")
         elements = fetch_osm(key, value)
+        if elements is None:
+            # Unknown state for this category — its rows weren't refreshed,
+            # so purging this week would delete live places
+            all_fetches_ok = False
+            print("  FAILED after retries — purge disabled for this run")
+            continue
         rows = parse_osm(elements, category, subcategory)
         upsert(rows)
         print(f"  {len(rows)} records upserted")
         time.sleep(2)  # be polite to Overpass
+
+    # Purge only after the upserts, and only on a complete run: even after
+    # weeks of broken CI, the first good run refreshes everything alive
+    # before anything gets deleted
+    if all_fetches_ok:
+        purge_stale()
+    else:
+        print("Skipping purge: at least one Overpass fetch failed")
 
 
 if __name__ == "__main__":

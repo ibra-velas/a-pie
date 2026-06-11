@@ -88,6 +88,7 @@ Local dev: `npm run dev` (Vite) proxies `/api` to `localhost:3001`.
 - Keep OSM names **verbatim** — `.title()` mangles "McDonald's" → "Mcdonald'S". Only the no-name fallback is title-cased.
 - `DATABASE_URL` is read with `.strip()` (a trailing newline pasted into the GitHub secret once broke CI with `database "postgres\n" does not exist`).
 - Upserts are batched with `psycopg2.extras.execute_values` (500 rows/statement); row-by-row inserts against the remote pooler used to dominate the run time.
+- **Ghost purge** (June 2026): rows not seen in OSM for >21 days are deleted at the end of the run, but only if every Overpass fetch succeeded (`fetch_osm` returns `None` on failure — never confuse that with an empty result) and never more than 20% of the table at once. `ingesta/_check_stale.py` is the read-only diagnostic.
 
 Workflow run time is mostly Overpass fetches + retries (429/504 are normal when Overpass is loaded; the script retries 3×).
 
