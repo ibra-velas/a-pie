@@ -1,6 +1,32 @@
 import { useState, useEffect, useRef } from 'react'
 import { CATEGORY_COLORS } from './Map'
 
+// Stroke icons instead of emoji: consistent across devices and on-palette
+function LocateIcon({ spinning }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1C7A8A"
+      strokeWidth="2" strokeLinecap="round" aria-hidden="true"
+      style={spinning ? { animation: 'spin 1s linear infinite' } : undefined}>
+      <circle cx="12" cy="12" r="6.5" />
+      <circle cx="12" cy="12" r="1.8" fill="#1C7A8A" stroke="none" />
+      <line x1="12" y1="1.5" x2="12" y2="5" />
+      <line x1="12" y1="19" x2="12" y2="22.5" />
+      <line x1="1.5" y1="12" x2="5" y2="12" />
+      <line x1="19" y1="12" x2="22.5" y2="12" />
+    </svg>
+  )
+}
+
+function SearchIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff"
+      strokeWidth="2.4" strokeLinecap="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" />
+      <line x1="16.8" y1="16.8" x2="21.5" y2="21.5" />
+    </svg>
+  )
+}
+
 // Grouped pill config — transporte intentionally omitted
 export const PILL_GROUPS = [
   {
@@ -264,12 +290,16 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* Search row */}
-        <div data-tour="address" style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+        {/* Search row — shared height and radius so the three pieces read as one control */}
+        <div data-tour="address" style={{ display: 'flex', gap: 8, marginBottom: 10, height: isMobile ? 44 : 38 }}>
           <button onClick={handleLocate} disabled={locating || loading} title="Usar mi ubicación"
             aria-label="Usar mi ubicación"
-            style={{ padding: '7px 10px', background: '#f3f4f6', border: '1px solid #d1d5db', borderRadius: 8, cursor: 'pointer', fontSize: fz(15), flexShrink: 0 }}>
-            {locating ? '⏳' : '📍'}
+            style={{
+              width: isMobile ? 44 : 38, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: '#fff', border: '1px solid #DCD5C9', borderRadius: 12,
+              cursor: 'pointer', flexShrink: 0, opacity: locating || loading ? 0.6 : 1,
+            }}>
+            <LocateIcon spinning={locating} />
           </button>
           <input
             value={address}
@@ -277,15 +307,20 @@ export default function Sidebar({
             onKeyDown={e => e.key === 'Enter' && onSearch(address)}
             placeholder="Tu dirección..."
             title="Escribe una dirección en Tenerife y pulsa Enter"
-            style={{ flex: 1, padding: '7px 10px', border: '1px solid #d1d5db', borderRadius: 8, minWidth: 0,
+            style={{ flex: 1, padding: '0 12px', border: '1px solid #DCD5C9', borderRadius: 12, minWidth: 0,
               // 16px on mobile: anything smaller triggers iOS auto-zoom on focus
               fontSize: isMobile ? 16 : 13 }}
           />
           <button onClick={() => onSearch(address)} disabled={loading}
             title="Buscar lugares en esta dirección"
             aria-label="Buscar lugares en esta dirección"
-            style={{ padding: '7px 12px', background: '#1C7A8A', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontSize: fz(13) }}>
-            {loading ? '...' : '→'}
+            style={{
+              width: isMobile ? 44 : 38, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: '#1C7A8A', border: 'none', borderRadius: 12,
+              cursor: 'pointer', flexShrink: 0, opacity: loading ? 0.6 : 1,
+              boxShadow: '0 2px 8px rgba(28,122,138,0.25)',
+            }}>
+            <SearchIcon />
           </button>
         </div>
 
@@ -300,11 +335,11 @@ export default function Sidebar({
                   onClick={() => setSelectedZone(active ? null : zone)}
                   title={`Ver ciudades de la zona ${zone}`}
                   style={{
-                    fontSize: fz(11), padding: '3px 10px', borderRadius: 99, cursor: 'pointer',
-                    border: `1px solid ${active ? '#1C7A8A' : '#d1d5db'}`,
-                    background: active ? '#1C7A8A' : '#f9fafb',
-                    color: active ? '#fff' : '#374151',
-                    fontWeight: active ? 600 : 400,
+                    fontSize: fz(11), padding: isMobile ? '5px 12px' : '3px 10px', borderRadius: 99, cursor: 'pointer',
+                    border: `1px solid ${active ? '#1C7A8A' : '#DCD5C9'}`,
+                    background: active ? '#1C7A8A' : '#fff',
+                    color: active ? '#fff' : '#4b5563',
+                    fontWeight: active ? 600 : 500,
                   }}>
                   {zone}
                 </button>
@@ -319,7 +354,7 @@ export default function Sidebar({
                   onClick={() => { setAddress(city.label); onLocate(city.lat, city.lon) }}
                   disabled={loading}
                   title={`Centrar el mapa en ${city.label}`}
-                  style={{ fontSize: fz(11), padding: '3px 9px', borderRadius: 99, border: '1px solid #d1d5db', background: '#FBEFE5', color: '#1C7A8A', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                  style={{ fontSize: fz(11), padding: isMobile ? '5px 12px' : '3px 9px', borderRadius: 99, border: '1px solid rgba(28,122,138,0.25)', background: '#FBEFE5', color: '#1C7A8A', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 500 }}>
                   {city.label}
                 </button>
               ))}
@@ -330,11 +365,12 @@ export default function Sidebar({
         {error && <div style={{ fontSize: fz(12), color: '#D85A30', marginBottom: 8 }}>{error}</div>}
 
         {/* Minute slider */}
-        <div data-tour="minutes" style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}
+        <div data-tour="minutes" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}
              title="Cuántos minutos estás dispuesto a caminar">
           <span style={{ fontSize: fz(14), fontWeight: 700, color: '#1C7A8A', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{minutes} min a pie</span>
           <input type="range" min="5" max="30" step="5" value={minutes}
-            onChange={e => onMinutesChange(Number(e.target.value))} style={{ flex: 1 }}
+            onChange={e => onMinutesChange(Number(e.target.value))}
+            style={{ flex: 1, height: isMobile ? 28 : 'auto' }}
             aria-label="Minutos dispuesto a caminar"
             title="Desliza para cambiar cuántos minutos quieres caminar" />
         </div>
@@ -343,8 +379,18 @@ export default function Sidebar({
         <button onClick={() => setFiltersOpen(o => !o)}
           data-tour="filters"
           title="Mostrar u ocultar filtros por tipo de lugar"
-          style={{ width: '100%', padding: '5px 0', fontSize: fz(12), color: '#6b7280', background: 'none', border: '1px solid #e5e7eb', borderRadius: 6, cursor: 'pointer' }}>
-          {filtersOpen ? '▲ Ocultar filtros' : '▼ Filtrar por tipo'}
+          style={{
+            width: '100%', padding: '7px 0', fontSize: fz(12), fontWeight: 600,
+            color: '#1C7A8A', background: 'rgba(28,122,138,0.07)',
+            border: 'none', borderRadius: 10, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+            style={{ transform: filtersOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+          {filtersOpen ? 'Ocultar filtros' : 'Filtrar por tipo'}
         </button>
 
         {/* Grouped pills — shown when open */}
