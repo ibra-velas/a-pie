@@ -20,7 +20,7 @@ export const GROUP_COLORS = {
   tiendas: '#2E86AB',
 }
 
-const SUB_COLORS = {
+export const SUB_COLORS = {
   // Comida & Bebida
   restaurante:   '#F57C00',  // a juego con su marcador custom (naranja saturado)
   bar:           '#1B5E20',  // verde oscuro, a petición
@@ -33,8 +33,9 @@ const SUB_COLORS = {
   fruteria:      '#8DB600',
   pescaderia:    '#8DB600',
   mercado:       GROUP_COLORS.comida,
-  // Salud — azul de señalética hospitalaria, a petición (farmacia no:
-  // tiene marcador propio en SUB_MARKER_STYLES)
+  // Salud — azul de señalética hospitalaria, a petición. Farmacia lleva el
+  // verde de su cruz (el marcador en sí es custom, SUB_MARKER_STYLES manda)
+  farmacia:      '#00A14B',
   clinica:       '#005EB8',
   medico:        '#005EB8',
   hospital:      '#005EB8',

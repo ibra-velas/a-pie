@@ -1,5 +1,22 @@
 import { useState, useEffect, useRef } from 'react'
-import { CATEGORY_COLORS, GROUP_COLORS, colorFor } from './Map'
+import { CATEGORY_COLORS, GROUP_COLORS, SUB_COLORS, colorFor } from './Map'
+
+// Pills and list headers reuse the marker colors, but light ones (crema,
+// amarillo, verde manzana) are illegible as text on the cream panel.
+// HSL lightness lies here — yellow-greens look bright even at low L — so
+// darken by *perceived* luminance (green weighs ~7x more than blue to the
+// eye) until the tone reads as text. Borders and fills keep the true color.
+function textTone(hex) {
+  const n = parseInt(hex.slice(1), 16)
+  let r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255
+  for (let i = 0; i < 8 && 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.45; i++) {
+    r *= 0.85; g *= 0.85; b *= 0.85
+  }
+  return `rgb(${Math.round(r * 255)} ${Math.round(g * 255)} ${Math.round(b * 255)})`
+}
+
+// Marker color for a pill / results header; group color as fallback
+const subColor = (sub, fallback) => SUB_COLORS[sub] ?? fallback
 
 // Stroke icons instead of emoji: consistent across devices and on-palette
 function LocateIcon({ spinning }) {
@@ -232,7 +249,7 @@ export default function Sidebar({
       return subs.flatMap(sub => {
         const items = resources[sub]
         if (!items?.length) return []
-        return [{ sub, label: pill.label === 'Cultura' || pill.label === 'Ocio' ? sub : pill.label, color: g.color, items }]
+        return [{ sub, label: pill.label === 'Cultura' || pill.label === 'Ocio' ? sub : pill.label, color: textTone(subColor(sub, g.color)), items }]
       })
     })
   )
@@ -435,14 +452,16 @@ export default function Sidebar({
                     const count = (pill.subs ?? [pill.id]).reduce((n, s) => n + ((allResources?.[s] ?? []).length), 0)
                     const hasSearched = Object.keys(allResources ?? {}).length > 0
                     if (hasSearched && count === 0) return null
+                    // Multi-sub pills (Cultura/Ocio) keep the group color
+                    const c = pill.subs ? group.color : subColor(pill.id, group.color)
                     return (
                       <button key={pill.id} onClick={() => handlePillClick(pill)}
                         title={active ? `Ocultar ${pill.label.toLowerCase()} del mapa` : `Mostrar ${pill.label.toLowerCase()} en el mapa`}
                         style={{
                         fontSize: fz(11), padding: '3px 9px', borderRadius: 99,
-                        border: `1px solid ${active ? group.color : '#d1d5db'}`,
-                        background: active ? group.color + '22' : 'transparent',
-                        color: active ? group.color : '#9ca3af',
+                        border: `1px solid ${active ? c : '#d1d5db'}`,
+                        background: active ? c + '22' : 'transparent',
+                        color: active ? textTone(c) : '#9ca3af',
                         cursor: 'pointer',
                       }}>
                         {pill.label}{count > 0 ? ` ${count}` : ''}
