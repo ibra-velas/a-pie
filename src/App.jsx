@@ -184,9 +184,10 @@ export default function App() {
               <Drawer.Title style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
                 Buscador y lugares cercanos
               </Drawer.Title>
-              {/* Drag handle */}
-              <div aria-hidden="true" style={{ padding: '10px 0 6px', flexShrink: 0, cursor: 'grab' }}>
-                <div style={{ width: 44, height: 5, borderRadius: 99, background: '#D8CFC2', margin: '0 auto' }} />
+              {/* Drag handle — generous padding: the visual bar is tiny but the
+                  touch target must not be (it was ~21px tall and hard to grab) */}
+              <div aria-hidden="true" style={{ padding: '14px 0 14px', flexShrink: 0, cursor: 'grab' }}>
+                <div style={{ width: 52, height: 5, borderRadius: 99, background: '#D8CFC2', margin: '0 auto' }} />
               </div>
               {sidebar}
             </Drawer.Content>

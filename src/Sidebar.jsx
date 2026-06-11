@@ -250,6 +250,8 @@ export default function Sidebar({
       // Mobile: single scroll zone so pill groups never get clipped
       overflowY: isMobile ? 'auto' : 'hidden',
       overflowX: 'hidden',
+      // Scroll must not chain to the page (chained scroll = pull-to-refresh)
+      overscrollBehavior: 'contain',
     }}>
 
       {/* ── Controls ── */}
@@ -562,6 +564,13 @@ export default function Sidebar({
             Tiles © <a href="https://carto.com/attributions" target="_blank" rel="noopener noreferrer" style={{ color: '#8A7F70' }}>CARTO</a>
           </div>
         </div>
+
+        {/* Mobile + selection: the peek sheet only shows the top of the panel,
+            so the selected card must be able to scroll to the very top. Items
+            near the end of the list can't (not enough content below them) —
+            this spacer guarantees the scroll range. Removed on deselect, which
+            scrolls back to the controls anyway. */}
+        {isMobile && selected && <div aria-hidden="true" style={{ height: '75vh', flexShrink: 0 }} />}
       </div>
     </div>
   )

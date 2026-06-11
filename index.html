@@ -38,6 +38,11 @@
         font-family: "Plus Jakarta Sans", system-ui, sans-serif;
         color: #2B2820;
       }
+      /* Full-screen map app: dragging the sheet down must never trigger the
+         browser's pull-to-refresh (it reloaded the page mid-use) */
+      html, body {
+        overscroll-behavior-y: none;
+      }
       /* Brand color for native controls (range slider thumb/track) */
       input[type="range"] {
         accent-color: #1C7A8A;

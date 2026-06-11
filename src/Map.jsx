@@ -74,7 +74,8 @@ function makeIcon(item, isSelected) {
       font-size:${fontSize}px;
       box-shadow:${shadow};
       cursor:pointer;
-      transition:transform 0.1s;
+      transform:scale(var(--poi-scale, 1));
+      transition:transform 0.15s;
     ">${emoji}</div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
@@ -104,6 +105,15 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     }).addTo(leaflet.current)
     leaflet.current.createPane('linePane').style.zIndex = 450
     leaflet.current.createPane('originPane').style.zIndex = 620
+    // Markers grow with zoom via one CSS var on the container — restyling
+    // ~700 markers through setIcon on every zoom would be janky
+    const applyMarkerScale = () => {
+      const z = leaflet.current.getZoom()
+      const scale = Math.min(1.6, Math.max(1, 1 + (z - 14) * 0.15))
+      mapRef.current.style.setProperty('--poi-scale', scale)
+    }
+    leaflet.current.on('zoomend', applyMarkerScale)
+    applyMarkerScale()
     // Tapping empty map clears the selection (markers don't bubble here)
     leaflet.current.on('click', () => onSelectRef.current(null))
     return () => leaflet.current.remove()
