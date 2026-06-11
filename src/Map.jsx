@@ -46,7 +46,7 @@ const SUB_COLORS = {
   libreria:      '#F2E2C4',  // crema, a petición
   ferreteria:    '#9EA7AD',  // gris plata, a petición
   peluqueria:    '#1A1A1A',  // a juego con su marcador custom (tijera sobre negro)
-  floristeria:   GROUP_COLORS.tiendas,
+  floristeria:   '#F5DE6E',  // amarillo claro, a petición
 }
 
 export function colorFor(item) {
@@ -67,7 +67,7 @@ const SUBCATEGORY_ICONS = {
   mercado:       '🏪',
   // Comercio
   supermercado:  '🛒',
-  tienda:        '🏬',
+  tienda:        '🛍️',
   libreria:      '📚',
   ferreteria:    '🔧',
   peluqueria:    '✂️',
