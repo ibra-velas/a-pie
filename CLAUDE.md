@@ -65,6 +65,14 @@ The ORS request **must** include `options: { avoid_features: ['ferries'] }` — 
 - Deselection (✕ on the selected card, or tapping empty map) scrolls the panel back to the search controls.
 - Font sizes go through the `fz()` helper in `Sidebar.jsx` (+2px on mobile). The address input is exactly **16px on mobile** — anything smaller triggers iOS auto-zoom on focus.
 
+Visual language of the controls (June 2026 polish — keep new UI consistent with it):
+- **Stroke SVG icons, never emoji**, in brand teal `#1C7A8A` (see `LocateIcon`/`SearchIcon` in `Sidebar.jsx`).
+- White controls on the warm cream background, **warm borders** (`#DCD5C9` neutral, `rgba(28,122,138,…)` for teal-tinted), radius 12 for inputs/buttons, 99 for pills; active pill state = light teal fill + bold.
+- Native controls inherit the palette via `input[type="range"] { accent-color }` in `index.html`.
+- **Splash screen**: static markup in `index.html` (`#splash`), faded out by `App.jsx` ~1.2s after mount.
+
+City shortcuts (`CITY_ZONES` in `Sidebar.jsx`): coordinates are **hand-picked town centers** (refined June 2026), not geocoder output — don't "fix" them by geocoding. Quirks on purpose: Arona points at the Las Galletas/Costa del Silencio coast, and Taco replaced El Rosario in Metro. The active city pill is derived from the address box content matching the city label.
+
 Local dev: `npm run dev` (Vite) proxies `/api` to `localhost:3001`.
 
 ## Ingestion (`/ingesta`)
