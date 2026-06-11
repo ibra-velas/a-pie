@@ -357,15 +357,26 @@ export default function Sidebar({
           {/* City pills for selected zone */}
           {selectedZone && (
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {CITY_ZONES.find(z => z.zone === selectedZone)?.cities.map(city => (
-                <button key={city.label}
-                  onClick={() => { setAddress(city.label); onLocate(city.lat, city.lon) }}
-                  disabled={loading}
-                  title={`Centrar el mapa en ${city.label}`}
-                  style={{ fontSize: fz(11), padding: isMobile ? '5px 12px' : '3px 9px', borderRadius: 99, border: '1px solid rgba(28,122,138,0.25)', background: '#FBEFE5', color: '#1C7A8A', cursor: 'pointer', whiteSpace: 'nowrap', fontWeight: 500 }}>
-                  {city.label}
-                </button>
-              ))}
+              {CITY_ZONES.find(z => z.zone === selectedZone)?.cities.map(city => {
+                // The clicked city lands in the address box — that's our selection marker
+                const active = address === city.label
+                return (
+                  <button key={city.label}
+                    onClick={() => { setAddress(city.label); onLocate(city.lat, city.lon) }}
+                    disabled={loading}
+                    title={`Centrar el mapa en ${city.label}`}
+                    style={{
+                      fontSize: fz(11), padding: isMobile ? '5px 12px' : '3px 9px', borderRadius: 99,
+                      border: `1px solid ${active ? 'rgba(28,122,138,0.55)' : 'rgba(28,122,138,0.25)'}`,
+                      background: active ? 'rgba(28,122,138,0.13)' : '#FBEFE5',
+                      color: '#1C7A8A', cursor: 'pointer', whiteSpace: 'nowrap',
+                      fontWeight: active ? 700 : 500,
+                      transition: 'background 0.15s, border-color 0.15s',
+                    }}>
+                    {city.label}
+                  </button>
+                )
+              })}
             </div>
           )}
         </div>
