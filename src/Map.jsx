@@ -28,9 +28,10 @@ const SUB_COLORS = {
   comida_rapida: '#DA291C',  // rojo fast-food (McDonald's red), a petición
   panaderia:     '#C49A6C',  // marrón kraft cálido (bolsa de papel), a petición
   heladeria:     '#F06EAA',  // candy pink, a petición
-  carniceria:    GROUP_COLORS.comida,
-  fruteria:      GROUP_COLORS.comida,
-  pescaderia:    GROUP_COLORS.comida,
+  // Alimentación fresca: mismo verde manzana que supermercado, a petición
+  carniceria:    '#8DB600',
+  fruteria:      '#8DB600',
+  pescaderia:    '#8DB600',
   mercado:       GROUP_COLORS.comida,
   // Salud — azul de señalética hospitalaria, a petición (farmacia no:
   // tiene marcador propio en SUB_MARKER_STYLES)
@@ -44,7 +45,7 @@ const SUB_COLORS = {
   tienda:        GROUP_COLORS.tiendas,
   libreria:      '#F2E2C4',  // crema, a petición
   ferreteria:    '#9EA7AD',  // gris plata, a petición
-  peluqueria:    GROUP_COLORS.tiendas,
+  peluqueria:    '#1A1A1A',  // a juego con su marcador custom (tijera sobre negro)
   floristeria:   GROUP_COLORS.tiendas,
 }
 
@@ -58,7 +59,7 @@ const SUBCATEGORY_ICONS = {
   bar:           '🍺',
   cafe:          '☕',
   comida_rapida: '🍔',
-  panaderia:     '🥖',
+  panaderia:     '🍞',
   heladeria:     '🍦',
   carniceria:    '🥩',
   fruteria:      '🍎',
@@ -107,14 +108,26 @@ const SUB_MARKER_STYLES = {
       <path d="M9 2.5h6V9h6.5v6H15v6.5H9V15H2.5V9H9z" fill="#00A14B"/>
     </svg>`,
   },
+  // White scissors on black
+  peluqueria: {
+    bg: '#1A1A1A',
+    glyph: s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"
+      fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="6" cy="6" r="3"/>
+      <circle cx="6" cy="18" r="3"/>
+      <line x1="20" y1="4" x2="8.12" y2="15.88"/>
+      <line x1="14.47" y1="14.48" x2="20" y2="20"/>
+      <line x1="8.12" y1="8.12" x2="12" y2="12"/>
+    </svg>`,
+  },
   // Fork & knife tops in white on saturated orange
   restaurante: {
     bg: '#F57C00',
     glyph: s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"
       fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M4.5 3v5.5a3 3 0 0 0 3 3 3 3 0 0 0 3-3V3"/>
-      <path d="M7.5 3v14"/>
-      <path d="M19.5 13V3a4.5 4.5 0 0 0-4.5 4.5V11c0 1.1.9 2 2 2h2.5Zm0 0v4"/>
+      <path d="M4.5 2.5v5.5a3 3 0 0 0 3 3 3 3 0 0 0 3-3V2.5"/>
+      <path d="M7.5 2.5v19"/>
+      <path d="M19.5 13.5V2.5A4.5 4.5 0 0 0 15 7v4.5c0 1.1.9 2 2 2h2.5Zm0 0v8"/>
     </svg>`,
   },
 }

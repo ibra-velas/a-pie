@@ -421,7 +421,7 @@ export default function Sidebar({
               <button onClick={() => onToggleGroup(ALL_SUBS)}
                 title="Activar o desactivar todos los filtros a la vez"
                 style={{ fontSize: fz(11), padding: '2px 10px', borderRadius: 99, border: '1px solid #d1d5db', background: 'none', color: '#6b7280', cursor: 'pointer' }}>
-                {ALL_SUBS.every(s => activeSubs.has(s)) ? 'Desmarcar todo' : 'Marcar todo'}
+                {ALL_SUBS.every(s => activeSubs.has(s)) ? 'Deseleccionar todo' : 'Seleccionar todo'}
               </button>
             </div>
             {PILL_GROUPS.map(group => (
