@@ -175,26 +175,34 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     markerLayer.current.clearLayers()
     markersById.current = {}
     Object.values(resources).flat().forEach(item => {
+      const isSel = item.id === selectedIdRef.current
       const [lon, lat] = item.location.coordinates
-      const marker = L.marker([lat, lon], { icon: makeIcon(item, item.id === selectedIdRef.current) })
+      const marker = L.marker([lat, lon], { icon: makeIcon(item, isSel) })
         .on('click', () => onSelectRef.current(item))
-        .bindTooltip(item.name, { direction: 'top', offset: [0, 0] })
+        // Selected marker keeps its name visible (permanent tooltip)
+        .bindTooltip(item.name, { direction: 'top', offset: [0, 0], permanent: isSel })
         .addTo(markerLayer.current)
       markersById.current[item.id] = { marker, item }
     })
   }, [resources])
 
-  // Selection change: restyle just the previous and the new marker
+  // Selection change: restyle just the previous and the new marker.
+  // The tooltip is re-bound because `permanent` can't be toggled in place:
+  // selected = name always visible, unselected = back to hover-only.
   useEffect(() => {
     const prev = markersById.current[selectedIdRef.current]
     if (prev) {
       prev.marker.setIcon(makeIcon(prev.item, false))
       prev.marker.setZIndexOffset(0)
+      prev.marker.unbindTooltip()
+      prev.marker.bindTooltip(prev.item.name, { direction: 'top', offset: [0, 0] })
     }
     const next = selected ? markersById.current[selected.id] : null
     if (next) {
       next.marker.setIcon(makeIcon(next.item, true))
       next.marker.setZIndexOffset(1000)
+      next.marker.unbindTooltip()
+      next.marker.bindTooltip(next.item.name, { direction: 'top', offset: [0, 0], permanent: true })
     }
     selectedIdRef.current = selected?.id ?? null
   }, [selected])
