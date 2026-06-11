@@ -73,6 +73,8 @@ Visual language of the controls (June 2026 polish — keep new UI consistent wit
 
 City shortcuts (`CITY_ZONES` in `Sidebar.jsx`): coordinates are **hand-picked town centers** (refined June 2026), not geocoder output — don't "fix" them by geocoding. Quirks on purpose: Arona points at the Las Galletas/Costa del Silencio coast, and Taco replaced El Rosario in Metro. The active city pill is derived from the address box content matching the city label.
 
+Geolocation (`handleLocate` in `Sidebar.jsx`) reverse-geocodes with **`zoom=10` on purpose**, so the address box shows only the city, never the street. Street-level reverse results caused errors around La Cuesta (San Cristóbal de La Laguna) — don't "improve" it by raising the zoom.
+
 Local dev: `npm run dev` (Vite) proxies `/api` to `localhost:3001`.
 
 ## Ingestion (`/ingesta`)
