@@ -22,21 +22,28 @@ export const GROUP_COLORS = {
 
 const SUB_COLORS = {
   // Comida & Bebida
-  restaurante:   GROUP_COLORS.comida,
-  bar:           GROUP_COLORS.comida,
-  cafe:          GROUP_COLORS.comida,
-  comida_rapida: GROUP_COLORS.comida,
-  panaderia:     GROUP_COLORS.comida,
-  heladeria:     GROUP_COLORS.comida,
+  restaurante:   '#F57C00',  // a juego con su marcador custom (naranja saturado)
+  bar:           '#1B5E20',  // verde oscuro, a petición
+  cafe:          '#6F4E37',  // coffee brown, a petición — no el terracota del grupo
+  comida_rapida: '#DA291C',  // rojo fast-food (McDonald's red), a petición
+  panaderia:     '#C49A6C',  // marrón kraft cálido (bolsa de papel), a petición
+  heladeria:     '#F06EAA',  // candy pink, a petición
   carniceria:    GROUP_COLORS.comida,
   fruteria:      GROUP_COLORS.comida,
   pescaderia:    GROUP_COLORS.comida,
   mercado:       GROUP_COLORS.comida,
+  // Salud — azul de señalética hospitalaria, a petición (farmacia no:
+  // tiene marcador propio en SUB_MARKER_STYLES)
+  clinica:       '#005EB8',
+  medico:        '#005EB8',
+  hospital:      '#005EB8',
+  // Ocio
+  parque:        '#7CC576',  // verde claro, a petición
   // Tiendas
-  supermercado:  GROUP_COLORS.tiendas,
+  supermercado:  '#8DB600',  // verde manzana, a petición
   tienda:        GROUP_COLORS.tiendas,
-  libreria:      GROUP_COLORS.tiendas,
-  ferreteria:    GROUP_COLORS.tiendas,
+  libreria:      '#F2E2C4',  // crema, a petición
+  ferreteria:    '#9EA7AD',  // gris plata, a petición
   peluqueria:    GROUP_COLORS.tiendas,
   floristeria:   GROUP_COLORS.tiendas,
 }
@@ -88,21 +95,48 @@ const SUBCATEGORY_ICONS = {
   parada_bus:    '🚌',
 }
 
+// Custom marker designs per subcategory (hand-specified, June 2026).
+// They override the generic look (group-color disc + emoji): each entry
+// sets the disc face, the ring and an SVG glyph drawn at `size`.
+const SUB_MARKER_STYLES = {
+  // Classic pharmacy sign: green cross on white, black ring
+  farmacia: {
+    bg: '#fff',
+    ring: '#1A1A1A',
+    glyph: s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M9 2.5h6V9h6.5v6H15v6.5H9V15H2.5V9H9z" fill="#00A14B"/>
+    </svg>`,
+  },
+  // Fork & knife tops in white on saturated orange
+  restaurante: {
+    bg: '#F57C00',
+    glyph: s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"
+      fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4.5 3v5.5a3 3 0 0 0 3 3 3 3 0 0 0 3-3V3"/>
+      <path d="M7.5 3v14"/>
+      <path d="M19.5 13V3a4.5 4.5 0 0 0-4.5 4.5V11c0 1.1.9 2 2 2h2.5Zm0 0v4"/>
+    </svg>`,
+  },
+}
+
 function makeIcon(item, isSelected) {
-  const emoji = SUBCATEGORY_ICONS[item.subcategory] ?? '📍'
-  const color = colorFor(item)
+  const custom = SUB_MARKER_STYLES[item.subcategory]
   const size = isSelected ? 26 : 20
   const fontSize = isSelected ? 11 : 9
-  const border = isSelected ? `3px solid #fff` : `2px solid rgba(255,255,255,0.8)`
+  const ring = custom?.ring ?? (isSelected ? '#fff' : 'rgba(255,255,255,0.8)')
+  const border = isSelected ? `3px solid ${ring}` : `2px solid ${ring}`
   const shadow = isSelected
     ? '0 2px 8px rgba(0,0,0,0.4)'
     : '0 1px 4px rgba(0,0,0,0.25)'
+  const content = custom
+    ? custom.glyph(Math.round(size * 0.62))
+    : (SUBCATEGORY_ICONS[item.subcategory] ?? '📍')
 
   return L.divIcon({
     className: '',
     html: `<div style="
       width:${size}px;height:${size}px;
-      background:${color};
+      background:${custom?.bg ?? colorFor(item)};
       border:${border};
       border-radius:50%;
       display:flex;align-items:center;justify-content:center;
@@ -111,7 +145,7 @@ function makeIcon(item, isSelected) {
       cursor:pointer;
       transform:scale(var(--poi-scale, 1));
       transition:transform 0.15s;
-    ">${emoji}</div>`,
+    ">${content}</div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
     tooltipAnchor: [0, -(size / 2 + 4)],
