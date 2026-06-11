@@ -273,19 +273,27 @@ export default function Sidebar({
             <div style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: 6,
+              gap: 7,
               marginTop: 10,
-              padding: '4px 10px',
-              background: '#FBEFE5',
-              border: '1px solid rgba(216, 124, 63, 0.25)',
+              padding: '5px 12px',
+              background: '#fff',
+              border: '1px solid rgba(28,122,138,0.25)',
               borderRadius: 99,
               fontSize: fz(11),
-              fontWeight: 600,
-              color: '#B65F26',
+              fontWeight: 500,
+              color: '#4b5563',
               letterSpacing: '0.01em',
+              boxShadow: '0 1px 3px rgba(43,40,32,0.06)',
             }}>
-              <span style={{ fontSize: fz(12) }}>🗺️</span>
-              {totalCount} lugares en {minutes} min a pie
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#1C7A8A"
+                strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z" />
+                <circle cx="12" cy="10" r="2.5" />
+              </svg>
+              <span>
+                <strong style={{ color: '#1C7A8A', fontWeight: 700 }}>{totalCount} lugares</strong>
+                {' '}en {minutes} min a pie
+              </span>
             </div>
           )}
         </div>
