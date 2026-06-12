@@ -40,12 +40,12 @@ export const SUB_COLORS = {
   medico:        '#005EB8',
   hospital:      '#005EB8',
   // Ocio
-  parque:        '#7CC576',  // verde claro, a petición
+  parque:        '#CDEBB0',  // verde muy claro, a petición — el 🌳 oscuro contrasta encima
   // Tiendas
   supermercado:  '#8DB600',  // verde manzana, a petición
   tienda:        GROUP_COLORS.tiendas,
   libreria:      '#F2E2C4',  // crema, a petición
-  ferreteria:    '#9EA7AD',  // gris plata, a petición
+  ferreteria:    '#9EA7AD',  // gris plata para pills/lista; el marcador es claro (SUB_MARKER_STYLES manda)
   peluqueria:    '#1A1A1A',  // a juego con su marcador custom (tijera sobre negro)
   floristeria:   '#F5DE6E',  // amarillo claro, a petición
 }
@@ -121,6 +121,23 @@ const SUB_MARKER_STYLES = {
       <line x1="8.12" y1="8.12" x2="12" y2="12"/>
     </svg>`,
   },
+  // Cara clara con anillo gris plata: el fondo plata se confundía con el
+  // propio emoji 🔧 (también gris) en móvil. El plata identitario va al anillo.
+  ferreteria: {
+    bg: '#F4F4F4',
+    ring: '#9EA7AD',
+  },
+  // Carrito SVG gris casi negro sobre el verde manzana: el emoji 🛒 lo pinta
+  // cada sistema a su manera y en Android/iOS salía gris claro sin contraste.
+  supermercado: {
+    bg: '#8DB600',
+    glyph: s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"
+      fill="none" stroke="#2B2B2B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="8" cy="21" r="1.4"/>
+      <circle cx="19" cy="21" r="1.4"/>
+      <path d="M2 2.5h2l2.66 12.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 1.95-1.57L22 7.5H5.1"/>
+    </svg>`,
+  },
   // Fork & knife tops in white on saturated orange
   restaurante: {
     bg: '#F57C00',
@@ -142,7 +159,7 @@ function makeIcon(item, isSelected) {
   const shadow = isSelected
     ? '0 2px 8px rgba(0,0,0,0.4)'
     : '0 1px 4px rgba(0,0,0,0.25)'
-  const content = custom
+  const content = custom?.glyph
     ? custom.glyph(Math.round(size * 0.62))
     : (SUBCATEGORY_ICONS[item.subcategory] ?? '📍')
 
