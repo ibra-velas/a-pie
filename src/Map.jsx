@@ -97,10 +97,21 @@ const SUBCATEGORY_ICONS = {
   parada_bus:    '🚌',
 }
 
+// Cruz azul claro sobre el azul de señalética: sustituye al emoji 🩺, que
+// se perdía sobre el fondo azul. Compartida por clinica y medico.
+const CRUZ_SANITARIA = {
+  bg: '#005EB8',
+  glyph: s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M9 2.5h6V9h6.5v6H15v6.5H9V15H2.5V9H9z" fill="#A8D8FF"/>
+  </svg>`,
+}
+
 // Custom marker designs per subcategory (hand-specified, June 2026).
 // They override the generic look (group-color disc + emoji): each entry
 // sets the disc face, the ring and an SVG glyph drawn at `size`.
 const SUB_MARKER_STYLES = {
+  clinica: CRUZ_SANITARIA,
+  medico:  CRUZ_SANITARIA,
   // Classic pharmacy sign: green cross on white, black ring
   farmacia: {
     bg: '#fff',
