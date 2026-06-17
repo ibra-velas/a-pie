@@ -41,6 +41,7 @@ export const SUB_COLORS = {
   hospital:      '#005EB8',
   // Ocio
   parque:        '#CDEBB0',  // verde muy claro, a petición — el 🌳 oscuro contrasta encima
+  discoteca:     '#9C27B0',  // morado vivo de ocio nocturno (la 🪩 brilla encima)
   // Tiendas
   supermercado:  '#8DB600',  // verde manzana, a petición
   tienda:        GROUP_COLORS.tiendas,
@@ -88,6 +89,7 @@ const SUBCATEGORY_ICONS = {
   deportes:      '⚽',
   piscina:       '🏊',
   gimnasio:      '💪',
+  discoteca:     '🪩',
   // Educación
   colegio:       '🏫',
   universidad:   '🎓',

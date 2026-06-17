@@ -95,7 +95,7 @@ export const PILL_GROUPS = [
     label: 'Ocio',
     color: CATEGORY_COLORS.ocio,
     // Single pill that covers all ocio subcategories
-    pills: [{ id: '__ocio', label: 'Ocio', subs: ['parque', 'deportes', 'piscina', 'gimnasio'] }],
+    pills: [{ id: '__ocio', label: 'Ocio', subs: ['parque', 'deportes', 'piscina', 'gimnasio', 'discoteca'] }],
   },
 ]
 
