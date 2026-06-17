@@ -203,26 +203,70 @@ const SUB_MARKER_STYLES = {
   },
 }
 
+// Marker shape per group (June 2026): Comida & Bebida → pin gota, Tiendas →
+// cuadradito redondeado, todo lo demás (Salud y belleza, Cultura y ocio) →
+// círculo. The subcategory lists mirror PILL_GROUPS in Sidebar.jsx.
+const TEARDROP_SUBS = new Set([
+  'restaurante', 'bar', 'cafe', 'comida_rapida', 'panaderia', 'heladeria',
+  'mercado', 'discoteca',
+])
+const SQUARE_SUBS = new Set([
+  'supermercado', 'tienda', 'carniceria', 'fruteria', 'pescaderia', 'ropa',
+  'calzado', 'joyeria', 'optica', 'regalos', 'papeleria', 'estanco', 'kiosko',
+  'muebles', 'electronica', 'libreria', 'ferreteria', 'floristeria', 'taller',
+])
+function shapeFor(sub) {
+  if (TEARDROP_SUBS.has(sub)) return 'teardrop'
+  if (SQUARE_SUBS.has(sub)) return 'square'
+  return 'circle'
+}
+
 function makeIcon(item, isSelected) {
   const custom = SUB_MARKER_STYLES[item.subcategory]
+  const shape = shapeFor(item.subcategory)
   const size = isSelected ? 26 : 20
   const fontSize = isSelected ? 11 : 9
   const ring = custom?.ring ?? (isSelected ? '#fff' : 'rgba(255,255,255,0.8)')
-  const border = isSelected ? `3px solid ${ring}` : `2px solid ${ring}`
+  const bw = isSelected ? 3 : 2
   const shadow = isSelected
     ? '0 2px 8px rgba(0,0,0,0.4)'
     : '0 1px 4px rgba(0,0,0,0.25)'
+  const bg = custom?.bg ?? colorFor(item)
   const content = custom?.glyph
     ? custom.glyph(Math.round(size * 0.62))
     : (SUBCATEGORY_ICONS[item.subcategory] ?? '📍')
 
+  // Pin gota: a square with one sharp corner, rotated -45° so the tip points
+  // down to the location; the glyph rides in a separate un-rotated layer so it
+  // stays upright. Anchored at the tip; scales from the tip so it stays pinned.
+  if (shape === 'teardrop') {
+    const h = Math.round(size * 1.21)
+    return L.divIcon({
+      className: '',
+      html: `<div style="
+        width:${size}px;height:${h}px;position:relative;cursor:pointer;
+        transform:scale(var(--poi-scale, 1));transform-origin:center bottom;
+        transition:transform 0.15s;">
+        <div style="position:absolute;left:0;top:0;width:${size}px;height:${size}px;
+          background:${bg};border:${bw}px solid ${ring};
+          border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:${shadow};"></div>
+        <div style="position:absolute;left:0;top:0;width:${size}px;height:${size}px;
+          display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;">${content}</div>
+      </div>`,
+      iconSize: [size, h],
+      iconAnchor: [size / 2, h],
+      tooltipAnchor: [0, -Math.round(size * 1.45)],
+    })
+  }
+
+  const radius = shape === 'square' ? `${Math.round(size * 0.28)}px` : '50%'
   return L.divIcon({
     className: '',
     html: `<div style="
       width:${size}px;height:${size}px;
-      background:${custom?.bg ?? colorFor(item)};
-      border:${border};
-      border-radius:50%;
+      background:${bg};
+      border:${bw}px solid ${ring};
+      border-radius:${radius};
       display:flex;align-items:center;justify-content:center;
       font-size:${fontSize}px;
       box-shadow:${shadow};
