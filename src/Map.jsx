@@ -233,8 +233,8 @@ const DOT_R_SEL = 9
 // Chincheta dibujada en canvas: misma velocidad que un circleMarker (un solo
 // lienzo para todos) pero con forma de pin — cabeza de color + aguja + brillo.
 // La punta de la aguja se ancla a la ubicación; el área de click es la cabeza.
-// El centro del anillo se dibuja r*HEAD_UP px por encima de la punta anclada
-const HEAD_UP = 3.3
+// El centro de la cabeza se dibuja r*HEAD_UP px por encima de la punta anclada
+const HEAD_UP = 2.9
 // Offset del tooltip para que el nombre quede por encima del anillo
 const farTipOffset = r => [0, -Math.round(r * HEAD_UP + r + 4)]
 const Pushpin = L.CircleMarker.extend({
@@ -248,30 +248,21 @@ const Pushpin = L.CircleMarker.extend({
     const r = this._radius
     const p = this._point
     const head = this._headCenter()
-    const color = this.options.fillColor
-    // aguja: trapecio largo de punta roma (menos puntiaguda) que sale del anillo
-    const topY = head.y + r * 0.7
-    const wTop = r * 0.26
-    const wBot = r * 0.11
+    // aguja gris afilada desde la base de la cabeza hasta la punta (ubicación)
+    const headBottomY = head.y + r
     ctx.beginPath()
-    ctx.moveTo(p.x - wTop, topY)
-    ctx.lineTo(p.x - wBot, p.y)
-    ctx.lineTo(p.x + wBot, p.y)
-    ctx.lineTo(p.x + wTop, topY)
+    ctx.moveTo(p.x - r * 0.32, headBottomY)
+    ctx.lineTo(p.x + r * 0.32, headBottomY)
+    ctx.lineTo(p.x, p.y)
     ctx.closePath()
-    ctx.lineJoin = 'round'
-    ctx.lineWidth = Math.max(1, r * 0.18)
-    ctx.fillStyle = color
-    ctx.strokeStyle = color
+    ctx.fillStyle = '#5b5b5b'
     ctx.fill()
-    ctx.stroke()
-    // anillo hueco y fino: solo el trazo se pinta, el centro deja ver el mapa
+    // cabeza rellena del color de la subcategoría
     ctx.beginPath()
-    ctx.arc(head.x, head.y, r * 0.83, 0, Math.PI * 2)
-    ctx.lineWidth = r * 0.34
-    ctx.strokeStyle = color
-    ctx.stroke()
-    // resalte de selección: aro blanco fino por fuera
+    ctx.arc(head.x, head.y, r, 0, Math.PI * 2)
+    ctx.fillStyle = this.options.fillColor
+    ctx.fill()
+    // resalte de selección: aro blanco por fuera
     if (this.options.selected) {
       ctx.beginPath()
       ctx.arc(head.x, head.y, r, 0, Math.PI * 2)
@@ -279,6 +270,11 @@ const Pushpin = L.CircleMarker.extend({
       ctx.strokeStyle = '#fff'
       ctx.stroke()
     }
+    // brillo
+    ctx.beginPath()
+    ctx.arc(head.x - r * 0.3, head.y - r * 0.35, r * 0.32, 0, Math.PI * 2)
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'
+    ctx.fill()
   },
   // El área clicable es el anillo (que está por encima de la punta anclada)
   _containsPoint(point) {
