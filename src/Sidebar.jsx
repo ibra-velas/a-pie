@@ -57,10 +57,8 @@ export const PILL_GROUPS = [
       { id: 'comida_rapida', label: 'Comida rápida' },
       { id: 'panaderia',     label: 'Panaderías' },
       { id: 'heladeria',     label: 'Heladerías' },
-      { id: 'carniceria',    label: 'Carnicerías' },
-      { id: 'fruteria',      label: 'Fruterías' },
-      { id: 'pescaderia',    label: 'Pescaderías' },
       { id: 'mercado',       label: 'Mercados' },
+      { id: 'discoteca',     label: 'Discotecas' },
     ],
   },
   {
@@ -69,6 +67,9 @@ export const PILL_GROUPS = [
     pills: [
       { id: 'supermercado',  label: 'Supermercados' },
       { id: 'tienda',        label: 'Tiendas' },
+      { id: 'carniceria',    label: 'Carnicerías' },
+      { id: 'fruteria',      label: 'Fruterías' },
+      { id: 'pescaderia',    label: 'Pescaderías' },
       { id: 'ropa',          label: 'Ropa' },
       { id: 'calzado',       label: 'Calzado' },
       { id: 'joyeria',       label: 'Joyerías' },
@@ -82,40 +83,28 @@ export const PILL_GROUPS = [
       { id: 'electronica',   label: 'Electrónica' },
       { id: 'libreria',      label: 'Librerías' },
       { id: 'ferreteria',    label: 'Ferreterías' },
-      { id: 'peluqueria',    label: 'Peluquerías' },
       { id: 'floristeria',   label: 'Floristerías' },
-    ],
-  },
-  {
-    label: 'Servicios',
-    color: '#37474F',
-    pills: [
       { id: 'taller',        label: 'Talleres' },
     ],
   },
   {
-    label: 'Salud',
+    label: 'Salud y belleza',
     color: CATEGORY_COLORS.salud,
     pills: [
       { id: 'farmacia',      label: 'Farmacias' },
       { id: 'clinica',       label: 'Clínicas' },
       { id: 'medico',        label: 'Médicos' },
       { id: 'hospital',      label: 'Hospitales' },
+      { id: 'peluqueria',    label: 'Peluquerías' },
     ],
   },
   {
-    label: 'Cultura',
+    label: 'Cultura y ocio',
     color: CATEGORY_COLORS.cultura,
-    // Single pill that covers all cultura subcategories
-    pills: [{ id: '__cultura', label: 'Cultura', subs: ['biblioteca', 'museo', 'teatro', 'cine'] }],
-  },
-  {
-    label: 'Ocio',
-    color: CATEGORY_COLORS.ocio,
-    // Combined "Ocio" pill + discoteca as its own toggle
+    // Combined cultura pill + combined ocio pill
     pills: [
-      { id: '__ocio', label: 'Ocio', subs: ['parque', 'deportes', 'piscina', 'gimnasio'] },
-      { id: 'discoteca', label: 'Discotecas' },
+      { id: '__cultura', label: 'Cultura', subs: ['biblioteca', 'museo', 'teatro', 'cine'] },
+      { id: '__ocio',    label: 'Ocio',    subs: ['parque', 'deportes', 'piscina', 'gimnasio'] },
     ],
   },
 ]
