@@ -358,6 +358,8 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
   // not the JS built-in
   const markersById = useRef({})
   const selectedIdRef = useRef(null)
+  // Debug overlay: live zoom readout (preview only)
+  const zoomLabelRef = useRef(null)
   // Whether markers are currently in far mode (zoom < FULL_ZOOM → canvas dots)
   const farRef = useRef(false)
   // Shared canvas renderer + layer group for the far-zoom dots
@@ -432,6 +434,15 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
       mapRef.current.style.setProperty('--poi-scale', scale)
     }
     farRef.current = leaflet.current.getZoom() < FULL_ZOOM
+    // Debug overlay: keep the zoom readout in sync (preview only)
+    const updateZoomLabel = () => {
+      if (zoomLabelRef.current) {
+        const z = leaflet.current.getZoom()
+        zoomLabelRef.current.textContent = `z ${z.toFixed(1)}${z < FULL_ZOOM ? ' · pin' : ' · icono'}`
+      }
+    }
+    leaflet.current.on('zoom zoomend', updateZoomLabel)
+    updateZoomLabel()
     leaflet.current.on('zoomend', () => {
       applyMarkerScale()
       // Swap canvas dots ↔ full DOM icons only when the zoom crosses FULL_ZOOM,
@@ -555,6 +566,16 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
   return (
     <div data-tour="map" style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
       <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
+      {/* Debug zoom readout (preview only) */}
+      <div
+        ref={zoomLabelRef}
+        style={{
+          position: 'absolute', top: 8, right: 8, zIndex: 1000,
+          padding: '3px 8px', borderRadius: 8, pointerEvents: 'none',
+          background: 'rgba(0,0,0,0.65)', color: '#fff',
+          font: '600 12px ui-monospace, monospace', letterSpacing: '0.02em',
+        }}
+      />
     </div>
   )
 }
