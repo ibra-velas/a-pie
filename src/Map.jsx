@@ -191,14 +191,22 @@ const SUB_MARKER_STYLES = {
       <line x1="8" y1="20" x2="16" y2="20"/>
     </svg>`,
   },
-  // Fork & knife tops in white on saturated orange
+  // Tenedor y cuchillo cruzados en aspa, blancos sobre el naranja saturado.
+  // viewBox recortado (2.8…) para que el dibujo ocupe más del disco.
   restaurante: {
     bg: '#F57C00',
-    glyph: s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"
-      fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M4.5 2.5v5.5a3 3 0 0 0 3 3 3 3 0 0 0 3-3V2.5"/>
-      <path d="M7.5 2.5v19"/>
-      <path d="M19.5 13.5V2.5A4.5 4.5 0 0 0 15 7v4.5c0 1.1.9 2 2 2h2.5Zm0 0v8"/>
+    glyph: s => `<svg width="${s}" height="${s}" viewBox="2.8 2.8 18.4 18.4" aria-hidden="true" fill="#fff">
+      <g transform="rotate(-25 12 12)">
+        <rect x="11.4" y="9" width="1.2" height="12" rx="0.6"/>
+        <rect x="9.75" y="2.8" width="0.85" height="5" rx="0.42"/>
+        <rect x="11.575" y="2.8" width="0.85" height="5" rx="0.42"/>
+        <rect x="13.4" y="2.8" width="0.85" height="5" rx="0.42"/>
+        <path d="M9.6 7.2h4.8v0.4c0 1.5-1.1 2.3-2.4 2.3s-2.4-.8-2.4-2.3z"/>
+      </g>
+      <g transform="rotate(25 12 12)">
+        <rect x="11.4" y="9" width="1.2" height="12" rx="0.6"/>
+        <path d="M12 2.6C10.7 3.7 10.5 7.4 11.4 9.8L12.6 9.8C13.5 7.4 13.3 3.7 12 2.6Z"/>
+      </g>
     </svg>`,
   },
 }
