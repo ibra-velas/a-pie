@@ -224,7 +224,7 @@ function shapeFor(sub) {
 // At/above this zoom, non-selected markers show their full icon; below it they
 // collapse to a lightweight pushpin (round colored head + needle, no emoji/
 // shadow). Re-skinning happens only when the zoom crosses this threshold.
-const FULL_ZOOM = 16
+const FULL_ZOOM = 17
 
 // Chincheta de cabeza redonda con aguja — el estado a zoom alejado. Solo el
 // color identitario de la subcategoría, sin emoji ni sombra; la punta de la
