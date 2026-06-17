@@ -95,7 +95,7 @@ const SUBCATEGORY_ICONS = {
   optica:        '👓',
   regalos:       '🎁',
   estetica:      '💅',
-  perfumeria:    '🧴',
+  perfumeria:    '💄',
   papeleria:     '📎',
   estanco:       '🚬',
   kiosko:        '🍬',
