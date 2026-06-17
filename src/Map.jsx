@@ -230,6 +230,59 @@ const FULL_ZOOM = 17
 const DOT_R = 5
 const DOT_R_SEL = 7
 
+// Chincheta dibujada en canvas: misma velocidad que un circleMarker (un solo
+// lienzo para todos) pero con forma de pin — cabeza de color + aguja + brillo.
+// La punta de la aguja se ancla a la ubicación; el área de click es la cabeza.
+const NEEDLE = 1.6 // longitud de la aguja en múltiplos del radio de la cabeza
+const Pushpin = L.CircleMarker.extend({
+  _headCenter() {
+    const p = this._point
+    return L.point(p.x, p.y - this._radius * NEEDLE - this._radius)
+  },
+  _updatePath() {
+    const ctx = this._renderer && this._renderer._ctx
+    if (!ctx) return
+    const r = this._radius
+    const p = this._point
+    const headBottomY = p.y - r * NEEDLE
+    const head = this._headCenter()
+    // aguja (triángulo afilado hacia la punta = ubicación)
+    ctx.beginPath()
+    ctx.moveTo(p.x - r * 0.32, headBottomY)
+    ctx.lineTo(p.x + r * 0.32, headBottomY)
+    ctx.lineTo(p.x, p.y)
+    ctx.closePath()
+    ctx.fillStyle = '#5b5b5b'
+    ctx.fill()
+    // cabeza
+    ctx.beginPath()
+    ctx.arc(head.x, head.y, r, 0, Math.PI * 2)
+    ctx.fillStyle = this.options.fillColor
+    ctx.fill()
+    if (this.options.stroke && this.options.weight) {
+      ctx.lineWidth = this.options.weight
+      ctx.strokeStyle = this.options.color
+      ctx.stroke()
+    }
+    // brillo
+    ctx.beginPath()
+    ctx.arc(head.x - r * 0.3, head.y - r * 0.35, r * 0.32, 0, Math.PI * 2)
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'
+    ctx.fill()
+  },
+  // El área clicable es la cabeza (que está por encima de la punta anclada)
+  _containsPoint(point) {
+    return point.distanceTo(this._headCenter()) <= this._radius + this._clickTolerance()
+  },
+  // Los bounds deben cubrir cabeza + aguja para que el cull/redraw no recorte
+  _updateBounds() {
+    const r = this._radius + (this.options.weight || 0) / 2
+    const p = this._point
+    const topY = p.y - r * NEEDLE - this._radius - r
+    this._pxBounds = new L.Bounds(L.point(p.x - r, topY), L.point(p.x + r, p.y))
+  },
+})
+
 function makeIcon(item, isSelected) {
   const custom = SUB_MARKER_STYLES[item.subcategory]
   const shape = shapeFor(item.subcategory)
@@ -332,7 +385,7 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
       const [lon, lat] = item.location.coordinates
       if (far) {
         const c = colorFor(item)
-        const cm = L.circleMarker([lat, lon], {
+        const cm = new Pushpin([lat, lon], {
           renderer: canvasRenderer.current,
           radius: isSel ? DOT_R_SEL : DOT_R,
           fillColor: c, fillOpacity: 1,
@@ -355,13 +408,16 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
 
   useEffect(() => {
     leaflet.current = L.map(mapRef.current, { maxZoom: 20 }).setView([28.485, -16.320], 12)
-    canvasRenderer.current = L.canvas({ padding: 0.5 })
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
       attribution: '© CARTO · Datos: © OpenStreetMap',
       maxZoom: 20,
     }).addTo(leaflet.current)
     leaflet.current.createPane('linePane').style.zIndex = 450
+    // Dots live above the isochrone polygon (overlayPane, z400) so clicks reach
+    // them; otherwise the polygon swallows the click and nothing gets selected
+    leaflet.current.createPane('dotPane').style.zIndex = 460
     leaflet.current.createPane('originPane').style.zIndex = 620
+    canvasRenderer.current = L.canvas({ padding: 0.5, pane: 'dotPane' })
     // Markers grow with zoom via one CSS var on the container — restyling
     // ~700 markers through setIcon on every zoom would be janky
     const applyMarkerScale = () => {
@@ -409,6 +465,7 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     isoLayer.current?.remove()
     isoLayer.current = L.geoJSON(isochrone, {
       style: { color: '#1C7A8A', fillColor: '#3FA0B0', fillOpacity: 0.12, weight: 2 },
+      interactive: false,
     }).addTo(leaflet.current)
     // Extra bottom padding keeps the isochrone above the mobile bottom sheet
     leaflet.current.fitBounds(isoLayer.current.getBounds(), {
