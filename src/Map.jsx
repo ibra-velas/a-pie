@@ -240,12 +240,13 @@ function makePushpinIcon(item) {
   const top = size * 0.9
   return L.divIcon({
     className: '',
-    html: `<div style="transform:scale(var(--poi-scale, 1));transform-origin:center bottom;">
-      <svg width="${size}" height="${H}" viewBox="0 0 ${size} ${H}" style="display:block">
+    // Fixed size on purpose: the pushpin is the far-zoom state, it does not
+    // grow with --poi-scale like the full markers do.
+    html: `<svg width="${size}" height="${H}" viewBox="0 0 ${size} ${H}" style="display:block">
         <polygon points="${cx - sw},${top} ${cx + sw},${top} ${cx},${H}" fill="#5b5b5b"/>
         <circle cx="${cx}" cy="${r}" r="${r - 0.5}" fill="${color}"/>
         <ellipse cx="${cx - r * 0.3}" cy="${r - r * 0.35}" rx="${r * 0.32}" ry="${r * 0.22}" fill="#fff" opacity="0.45"/>
-      </svg></div>`,
+      </svg>`,
     iconSize: [size, H],
     iconAnchor: [size / 2, H],
     tooltipAnchor: [0, -(H + 2)],
