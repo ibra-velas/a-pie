@@ -75,7 +75,6 @@ export const PILL_GROUPS = [
       { id: 'joyeria',       label: 'Joyerías' },
       { id: 'optica',        label: 'Ópticas' },
       { id: 'regalos',       label: 'Regalos' },
-      { id: 'estetica',      label: 'Estética' },
       { id: 'papeleria',     label: 'Papelerías' },
       { id: 'estanco',       label: 'Estancos' },
       { id: 'kiosko',        label: 'Kioscos' },
@@ -96,6 +95,7 @@ export const PILL_GROUPS = [
       { id: 'medico',        label: 'Médicos' },
       { id: 'hospital',      label: 'Hospitales' },
       { id: 'peluqueria',    label: 'Peluquerías' },
+      { id: 'estetica',      label: 'Estética' },
     ],
   },
   {
