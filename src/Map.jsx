@@ -56,6 +56,7 @@ export const SUB_COLORS = {
   optica:        '#00897B',  // teal
   regalos:       '#E5447A',  // rosa regalo
   estetica:      '#F48FB1',  // rosa claro
+  perfumeria:    '#C2185B',  // rosa intenso (perfumería/cosmética)
   papeleria:     '#5C9CE0',  // azul papel
   estanco:       '#8E4A49',  // granate (la "T" del estanco)
   kiosko:        '#78909C',  // gris azulado (prensa)
@@ -94,6 +95,7 @@ const SUBCATEGORY_ICONS = {
   optica:        '👓',
   regalos:       '🎁',
   estetica:      '💅',
+  perfumeria:    '🧴',
   papeleria:     '📎',
   estanco:       '🚬',
   kiosko:        '🍬',

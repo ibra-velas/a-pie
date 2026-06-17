@@ -96,6 +96,7 @@ export const PILL_GROUPS = [
       { id: 'hospital',      label: 'Hospitales' },
       { id: 'peluqueria',    label: 'Peluquerías' },
       { id: 'estetica',      label: 'Estética' },
+      { id: 'perfumeria',    label: 'Perfumerías' },
     ],
   },
   {
