@@ -228,9 +228,9 @@ function makeIcon(item, isSelected) {
   const fontSize = isSelected ? 11 : 9
   const ring = custom?.ring ?? (isSelected ? '#fff' : 'rgba(255,255,255,0.8)')
   const bw = isSelected ? 3 : 2
-  const shadow = isSelected
-    ? '0 2px 8px rgba(0,0,0,0.4)'
-    : '0 1px 4px rgba(0,0,0,0.25)'
+  // Shadow only on the selected marker: box-shadow is the most expensive
+  // property to repaint and ~700 shadowed nodes is the bulk of the zoom jank
+  const shadow = isSelected ? '0 2px 8px rgba(0,0,0,0.4)' : 'none'
   const bg = custom?.bg ?? colorFor(item)
   const content = custom?.glyph
     ? custom.glyph(Math.round(size * 0.62))
@@ -250,8 +250,7 @@ function makeIcon(item, isSelected) {
       className: '',
       html: `<div style="
         width:${box}px;height:${h}px;position:relative;cursor:pointer;
-        transform:scale(var(--poi-scale, 1));transform-origin:center bottom;
-        transition:transform 0.15s;">
+        transform:scale(var(--poi-scale, 1));transform-origin:center bottom;">
         <div style="position:absolute;left:0;top:0;width:${box}px;height:${box}px;
           box-sizing:border-box;background:${bg};border:${bw}px solid ${ring};
           border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:${shadow};"></div>
@@ -277,7 +276,6 @@ function makeIcon(item, isSelected) {
       box-shadow:${shadow};
       cursor:pointer;
       transform:scale(var(--poi-scale, 1));
-      transition:transform 0.15s;
     ">${content}</div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
