@@ -384,15 +384,16 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
       const isSel = item.id === selectedIdRef.current
       const [lon, lat] = item.location.coordinates
       if (far) {
+        // No per-pin click handler: far-zoom selection is resolved at the map
+        // level (nearest pin to the tap) — more reliable than canvas hit-testing
+        // and more forgiving for tiny targets on mobile. See the map 'click'.
         const c = colorFor(item)
         const cm = new Pushpin([lat, lon], {
           renderer: canvasRenderer.current,
           radius: isSel ? DOT_R_SEL : DOT_R,
           fillColor: c, fillOpacity: 1,
           stroke: isSel, color: '#fff', weight: isSel ? 2 : 0,
-        })
-          .on('click', () => onSelectRef.current(item))
-          .addTo(canvasGroup.current)
+        }).addTo(canvasGroup.current)
         if (isSel) cm.bringToFront()
         markersById.current[item.id] = { marker: cm, item, canvas: true }
       } else {
@@ -437,8 +438,26 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
       }
     })
     applyMarkerScale()
-    // Tapping empty map clears the selection (markers don't bubble here)
-    leaflet.current.on('click', () => onSelectRef.current(null))
+    // Click handling. At far zoom the markers are canvas pins (no DOM node to
+    // click), so pick the nearest pin head to the tap; up close, DOM markers
+    // fire their own click and this just clears the selection on empty taps.
+    leaflet.current.on('click', (e) => {
+      if (farRef.current) {
+        const cp = e.containerPoint
+        let best = null, bestD = Infinity, bestR = DOT_R
+        for (const { marker, item, canvas } of Object.values(markersById.current)) {
+          if (!canvas) continue
+          const mp = leaflet.current.latLngToContainerPoint(marker.getLatLng())
+          const r = marker.options.radius
+          // pin head sits r*(NEEDLE+1) px above the anchored tip
+          const head = L.point(mp.x, mp.y - r * (NEEDLE + 1))
+          const d = cp.distanceTo(head)
+          if (d < bestD) { bestD = d; best = item; bestR = r }
+        }
+        if (best && bestD <= bestR + 16) { onSelectRef.current(best); return }
+      }
+      onSelectRef.current(null)
+    })
     return () => leaflet.current.remove()
   }, [])
 
