@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import L from 'leaflet'
 
 export const CATEGORY_COLORS = {
@@ -221,40 +221,75 @@ function shapeFor(sub) {
   return 'circle'
 }
 
-// At/above this zoom, non-selected markers show their full icon; below it they
-// collapse to a lightweight pushpin (round colored head + needle, no emoji/
-// shadow). Re-skinning happens only when the zoom crosses this threshold.
+// Below this zoom, non-selected markers are drawn as lightweight colored dots
+// on a single shared <canvas> (one node for all of them, instead of one DOM
+// element each) — that is what keeps zoom/pan fluid in dense areas. At/above it
+// they become the full DOM pin/square/circle with icon.
 const FULL_ZOOM = 17
+// Canvas pin head radius (px), fixed — does not grow with zoom
+const DOT_R = 7
+const DOT_R_SEL = 9
 
-// Chincheta de cabeza redonda con aguja — el estado a zoom alejado. Solo el
-// color identitario de la subcategoría, sin emoji ni sombra; la punta de la
-// aguja (abajo) es la que se ancla a la ubicación.
-function makePushpinIcon(item) {
-  const color = colorFor(item)
-  const size = 15
-  const r = size / 2
-  const stem = Math.round(size * 0.95)
-  const H = size + stem
-  const cx = size / 2
-  const sw = Math.max(1.2, size * 0.12)
-  const top = size * 0.9
-  return L.divIcon({
-    className: '',
-    // Fixed size on purpose: the pushpin is the far-zoom state, it does not
-    // grow with --poi-scale like the full markers do.
-    html: `<svg width="${size}" height="${H}" viewBox="0 0 ${size} ${H}" style="display:block">
-        <polygon points="${cx - sw},${top} ${cx + sw},${top} ${cx},${H}" fill="#5b5b5b"/>
-        <circle cx="${cx}" cy="${r}" r="${r - 0.5}" fill="${color}"/>
-        <ellipse cx="${cx - r * 0.3}" cy="${r - r * 0.35}" rx="${r * 0.32}" ry="${r * 0.22}" fill="#fff" opacity="0.45"/>
-      </svg>`,
-    iconSize: [size, H],
-    iconAnchor: [size / 2, H],
-    tooltipAnchor: [0, -(H + 2)],
-  })
-}
+// Chincheta dibujada en canvas: misma velocidad que un circleMarker (un solo
+// lienzo para todos) pero con forma de pin — cabeza de color + aguja + brillo.
+// La punta de la aguja se ancla a la ubicación; el área de click es la cabeza.
+// El centro de la cabeza se dibuja r*HEAD_UP px por encima de la punta anclada
+const HEAD_UP = 2.9
+// Offset del tooltip para que el nombre quede por encima del anillo
+const farTipOffset = r => [0, -Math.round(r * HEAD_UP + r + 4)]
+const Pushpin = L.CircleMarker.extend({
+  _headCenter() {
+    const p = this._point
+    return L.point(p.x, p.y - this._radius * HEAD_UP)
+  },
+  _updatePath() {
+    const ctx = this._renderer && this._renderer._ctx
+    if (!ctx) return
+    const r = this._radius
+    const p = this._point
+    const head = this._headCenter()
+    // aguja gris afilada desde la base de la cabeza hasta la punta (ubicación)
+    const headBottomY = head.y + r
+    ctx.beginPath()
+    ctx.moveTo(p.x - r * 0.32, headBottomY)
+    ctx.lineTo(p.x + r * 0.32, headBottomY)
+    ctx.lineTo(p.x, p.y)
+    ctx.closePath()
+    ctx.fillStyle = '#5b5b5b'
+    ctx.fill()
+    // cabeza rellena del color de la subcategoría
+    ctx.beginPath()
+    ctx.arc(head.x, head.y, r, 0, Math.PI * 2)
+    ctx.fillStyle = this.options.fillColor
+    ctx.fill()
+    // resalte de selección: aro blanco por fuera
+    if (this.options.selected) {
+      ctx.beginPath()
+      ctx.arc(head.x, head.y, r, 0, Math.PI * 2)
+      ctx.lineWidth = 2
+      ctx.strokeStyle = '#fff'
+      ctx.stroke()
+    }
+    // brillo
+    ctx.beginPath()
+    ctx.arc(head.x - r * 0.3, head.y - r * 0.35, r * 0.32, 0, Math.PI * 2)
+    ctx.fillStyle = 'rgba(255,255,255,0.5)'
+    ctx.fill()
+  },
+  // El área clicable es el anillo (que está por encima de la punta anclada)
+  _containsPoint(point) {
+    return point.distanceTo(this._headCenter()) <= this._radius + this._clickTolerance()
+  },
+  // Los bounds deben cubrir anillo + aguja para que el cull/redraw no recorte
+  _updateBounds() {
+    const r = this._radius + 2
+    const p = this._point
+    const topY = p.y - this._radius * HEAD_UP - r
+    this._pxBounds = new L.Bounds(L.point(p.x - r, topY), L.point(p.x + r, p.y))
+  },
+})
 
-function makeIcon(item, isSelected, far) {
-  if (far && !isSelected) return makePushpinIcon(item)
+function makeIcon(item, isSelected) {
   const custom = SUB_MARKER_STYLES[item.subcategory]
   const shape = shapeFor(item.subcategory)
   const size = isSelected ? 26 : 20
@@ -327,11 +362,59 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
   // not the JS built-in
   const markersById = useRef({})
   const selectedIdRef = useRef(null)
-  // Whether markers are currently in far/pushpin mode (zoom < FULL_ZOOM)
+  // Whether markers are currently in far mode (zoom < FULL_ZOOM → canvas pins)
   const farRef = useRef(false)
+  // Shared canvas renderer + layer group for the far-zoom dots
+  const canvasRenderer = useRef(null)
+  const canvasGroup = useRef(null)
+  // Latest resources reachable from the once-registered zoom handler
+  const resourcesRef = useRef(resources)
+  resourcesRef.current = resources
   // Keep the latest onSelect reachable from handlers registered once
   const onSelectRef = useRef(onSelect)
   onSelectRef.current = onSelect
+
+  // Build the active marker representation for the current zoom: at far zoom,
+  // every non/selected point is a circleMarker on the shared canvas (fast);
+  // up close, each is a full DOM marker with its icon. Stable identity so the
+  // once-registered zoom handler can call it without going stale (reads refs).
+  const renderMarkers = useCallback(() => {
+    if (!leaflet.current) return
+    if (!markerLayer.current) markerLayer.current = L.layerGroup().addTo(leaflet.current)
+    if (!canvasGroup.current) canvasGroup.current = L.layerGroup().addTo(leaflet.current)
+    markerLayer.current.clearLayers()
+    canvasGroup.current.clearLayers()
+    markersById.current = {}
+    const far = farRef.current
+    Object.values(resourcesRef.current).flat().forEach(item => {
+      const isSel = item.id === selectedIdRef.current
+      const [lon, lat] = item.location.coordinates
+      if (far) {
+        // No per-pin click handler: far-zoom selection is resolved at the map
+        // level (nearest pin to the tap) — more reliable than canvas hit-testing
+        // and more forgiving for tiny targets on mobile. See the map 'click'.
+        const c = colorFor(item)
+        const cm = new Pushpin([lat, lon], {
+          renderer: canvasRenderer.current,
+          radius: isSel ? DOT_R_SEL : DOT_R,
+          fillColor: c,
+          selected: isSel,
+        }).addTo(canvasGroup.current)
+        if (isSel) {
+          cm.bringToFront()
+          cm.bindTooltip(item.name, { direction: 'top', permanent: true, offset: farTipOffset(DOT_R_SEL) }).openTooltip()
+        }
+        markersById.current[item.id] = { marker: cm, item, canvas: true }
+      } else {
+        const marker = L.marker([lat, lon], { icon: makeIcon(item, isSel) })
+          .on('click', () => onSelectRef.current(item))
+          // Selected marker keeps its name visible (permanent tooltip)
+          .bindTooltip(item.name, { direction: 'top', offset: [0, 0], permanent: isSel })
+          .addTo(markerLayer.current)
+        markersById.current[item.id] = { marker, item, canvas: false }
+      }
+    })
+  }, [])
 
   useEffect(() => {
     leaflet.current = L.map(mapRef.current, { maxZoom: 20 }).setView([28.485, -16.320], 12)
@@ -340,7 +423,11 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
       maxZoom: 20,
     }).addTo(leaflet.current)
     leaflet.current.createPane('linePane').style.zIndex = 450
+    // Dots live above the isochrone polygon (overlayPane, z400) so clicks reach
+    // them; otherwise the polygon swallows the click and nothing gets selected
+    leaflet.current.createPane('dotPane').style.zIndex = 460
     leaflet.current.createPane('originPane').style.zIndex = 620
+    canvasRenderer.current = L.canvas({ padding: 0.5, pane: 'dotPane' })
     // Markers grow with zoom via one CSS var on the container — restyling
     // ~700 markers through setIcon on every zoom would be janky
     const applyMarkerScale = () => {
@@ -351,19 +438,35 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     farRef.current = leaflet.current.getZoom() < FULL_ZOOM
     leaflet.current.on('zoomend', () => {
       applyMarkerScale()
-      // Swap pushpin ↔ full icons only when the zoom crosses FULL_ZOOM, so the
-      // expensive ~700-marker re-skin happens once per crossing, not per zoom
+      // Swap canvas dots ↔ full DOM icons only when the zoom crosses FULL_ZOOM,
+      // so the ~700-marker rebuild happens once per crossing, not per zoom
       const far = leaflet.current.getZoom() < FULL_ZOOM
       if (far !== farRef.current) {
         farRef.current = far
-        Object.values(markersById.current).forEach(({ marker, item }) => {
-          marker.setIcon(makeIcon(item, item.id === selectedIdRef.current, far))
-        })
+        renderMarkers()
       }
     })
     applyMarkerScale()
-    // Tapping empty map clears the selection (markers don't bubble here)
-    leaflet.current.on('click', () => onSelectRef.current(null))
+    // Click handling. At far zoom the markers are canvas pins (no DOM node to
+    // click), so pick the nearest pin head to the tap; up close, DOM markers
+    // fire their own click and this just clears the selection on empty taps.
+    leaflet.current.on('click', (e) => {
+      if (farRef.current) {
+        const cp = e.containerPoint
+        let best = null, bestD = Infinity, bestR = DOT_R
+        for (const { marker, item, canvas } of Object.values(markersById.current)) {
+          if (!canvas) continue
+          const mp = leaflet.current.latLngToContainerPoint(marker.getLatLng())
+          const r = marker.options.radius
+          // pin ring sits r*HEAD_UP px above the anchored tip
+          const head = L.point(mp.x, mp.y - r * HEAD_UP)
+          const d = cp.distanceTo(head)
+          if (d < bestD) { bestD = d; best = item; bestR = r }
+        }
+        if (best && bestD <= bestR + 16) { onSelectRef.current(best); return }
+      }
+      onSelectRef.current(null)
+    })
     return () => leaflet.current.remove()
   }, [])
 
@@ -390,6 +493,7 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     isoLayer.current?.remove()
     isoLayer.current = L.geoJSON(isochrone, {
       style: { color: '#1C7A8A', fillColor: '#3FA0B0', fillOpacity: 0.12, weight: 2 },
+      interactive: false,
     }).addTo(leaflet.current)
     // Extra bottom padding keeps the isochrone above the mobile bottom sheet
     leaflet.current.fitBounds(isoLayer.current.getBounds(), {
@@ -417,22 +521,8 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
   // Rebuild markers only when the resource set changes — with hundreds of
   // markers, recreating them on every selection makes taps janky
   useEffect(() => {
-    if (!markerLayer.current) {
-      markerLayer.current = L.layerGroup().addTo(leaflet.current)
-    }
-    markerLayer.current.clearLayers()
-    markersById.current = {}
-    Object.values(resources).flat().forEach(item => {
-      const isSel = item.id === selectedIdRef.current
-      const [lon, lat] = item.location.coordinates
-      const marker = L.marker([lat, lon], { icon: makeIcon(item, isSel, farRef.current) })
-        .on('click', () => onSelectRef.current(item))
-        // Selected marker keeps its name visible (permanent tooltip)
-        .bindTooltip(item.name, { direction: 'top', offset: [0, 0], permanent: isSel })
-        .addTo(markerLayer.current)
-      markersById.current[item.id] = { marker, item }
-    })
-  }, [resources])
+    renderMarkers()
+  }, [resources, renderMarkers])
 
   // Selection change: restyle just the previous and the new marker.
   // The tooltip is re-bound because `permanent` can't be toggled in place:
@@ -440,17 +530,28 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
   useEffect(() => {
     const prev = markersById.current[selectedIdRef.current]
     if (prev) {
-      prev.marker.setIcon(makeIcon(prev.item, false, farRef.current))
-      prev.marker.setZIndexOffset(0)
-      prev.marker.unbindTooltip()
-      prev.marker.bindTooltip(prev.item.name, { direction: 'top', offset: [0, 0] })
+      if (prev.canvas) {
+        prev.marker.setStyle({ radius: DOT_R, selected: false })
+        prev.marker.unbindTooltip()
+      } else {
+        prev.marker.setIcon(makeIcon(prev.item, false))
+        prev.marker.setZIndexOffset(0)
+        prev.marker.unbindTooltip()
+        prev.marker.bindTooltip(prev.item.name, { direction: 'top', offset: [0, 0] })
+      }
     }
     const next = selected ? markersById.current[selected.id] : null
     if (next) {
-      next.marker.setIcon(makeIcon(next.item, true, farRef.current))
-      next.marker.setZIndexOffset(1000)
-      next.marker.unbindTooltip()
-      next.marker.bindTooltip(next.item.name, { direction: 'top', offset: [0, 0], permanent: true })
+      if (next.canvas) {
+        next.marker.setStyle({ radius: DOT_R_SEL, selected: true })
+        next.marker.bringToFront()
+        next.marker.bindTooltip(next.item.name, { direction: 'top', permanent: true, offset: farTipOffset(DOT_R_SEL) }).openTooltip()
+      } else {
+        next.marker.setIcon(makeIcon(next.item, true))
+        next.marker.setZIndexOffset(1000)
+        next.marker.unbindTooltip()
+        next.marker.bindTooltip(next.item.name, { direction: 'top', offset: [0, 0], permanent: true })
+      }
     }
     selectedIdRef.current = selected?.id ?? null
   }, [selected])
