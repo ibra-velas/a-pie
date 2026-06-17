@@ -49,6 +49,20 @@ export const SUB_COLORS = {
   ferreteria:    '#9EA7AD',  // gris plata para pills/lista; el marcador es claro (SUB_MARKER_STYLES manda)
   peluqueria:    '#1A1A1A',  // a juego con su marcador custom (tijera sobre negro)
   floristeria:   '#F5DE6E',  // amarillo claro, a petición
+  // Tiendas — retail añadido (colores 1ª pasada, a afinar)
+  ropa:          '#5C6BC0',  // índigo
+  calzado:       '#8D6E63',  // marrón cuero
+  joyeria:       '#C9A227',  // dorado
+  optica:        '#00897B',  // teal
+  regalos:       '#E5447A',  // rosa regalo
+  estetica:      '#F48FB1',  // rosa claro
+  papeleria:     '#5C9CE0',  // azul papel
+  estanco:       '#8E4A49',  // granate (la "T" del estanco)
+  kiosko:        '#78909C',  // gris azulado (prensa)
+  muebles:       '#6D4C41',  // marrón oscuro
+  electronica:   '#546E7A',  // pizarra
+  // Servicios
+  taller:        '#37474F',  // gris acero
 }
 
 export function colorFor(item) {
@@ -74,6 +88,19 @@ const SUBCATEGORY_ICONS = {
   ferreteria:    '🔧',
   peluqueria:    '✂️',
   floristeria:   '🌸',
+  ropa:          '👕',
+  calzado:       '👟',
+  joyeria:       '💍',
+  optica:        '👓',
+  regalos:       '🎁',
+  estetica:      '💅',
+  papeleria:     '📎',
+  estanco:       '🚬',
+  kiosko:        '🗞️',
+  muebles:       '🛋️',
+  electronica:   '🔌',
+  // Servicios
+  taller:        '🛠️',
   // Salud
   farmacia:      '💊',
   clinica:       '🩺',

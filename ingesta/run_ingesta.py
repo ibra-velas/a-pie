@@ -67,6 +67,20 @@ OSM_SOURCES = [
     ("shop",    "books",          "comercio",   "libreria"),
     ("shop",    "florist",        "comercio",   "floristeria"),
     ("amenity", "marketplace",    "comercio",   "mercado"),
+    # comercio — retail con subcategoría propia
+    ("shop",    "clothes",        "comercio",   "ropa"),
+    ("shop",    "shoes",          "comercio",   "calzado"),
+    ("shop",    "jewelry",        "comercio",   "joyeria"),
+    ("shop",    "optician",       "comercio",   "optica"),
+    ("shop",    "gift",           "comercio",   "regalos"),
+    ("shop",    "beauty",         "comercio",   "estetica"),
+    ("shop",    "stationery",     "comercio",   "papeleria"),
+    ("shop",    "tobacco",        "comercio",   "estanco"),
+    ("shop",    "kiosk",          "comercio",   "kiosko"),
+    ("shop",    "furniture",      "comercio",   "muebles"),
+    ("shop",    "electronics",    "comercio",   "electronica"),
+    # servicios
+    ("shop",    "car_repair",     "comercio",   "taller"),
     # cultura
     ("amenity", "library",        "cultura",    "biblioteca"),
     ("tourism", "museum",         "cultura",    "museo"),

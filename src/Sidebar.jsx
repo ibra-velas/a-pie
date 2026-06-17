@@ -69,10 +69,28 @@ export const PILL_GROUPS = [
     pills: [
       { id: 'supermercado',  label: 'Supermercados' },
       { id: 'tienda',        label: 'Tiendas' },
+      { id: 'ropa',          label: 'Ropa' },
+      { id: 'calzado',       label: 'Calzado' },
+      { id: 'joyeria',       label: 'Joyerías' },
+      { id: 'optica',        label: 'Ópticas' },
+      { id: 'regalos',       label: 'Regalos' },
+      { id: 'estetica',      label: 'Estética' },
+      { id: 'papeleria',     label: 'Papelerías' },
+      { id: 'estanco',       label: 'Estancos' },
+      { id: 'kiosko',        label: 'Kioscos' },
+      { id: 'muebles',       label: 'Muebles' },
+      { id: 'electronica',   label: 'Electrónica' },
       { id: 'libreria',      label: 'Librerías' },
       { id: 'ferreteria',    label: 'Ferreterías' },
       { id: 'peluqueria',    label: 'Peluquerías' },
       { id: 'floristeria',   label: 'Floristerías' },
+    ],
+  },
+  {
+    label: 'Servicios',
+    color: '#37474F',
+    pills: [
+      { id: 'taller',        label: 'Talleres' },
     ],
   },
   {
