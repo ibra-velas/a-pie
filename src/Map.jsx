@@ -196,16 +196,16 @@ const SUB_MARKER_STYLES = {
   restaurante: {
     bg: '#F57C00',
     glyph: s => `<svg width="${s}" height="${s}" viewBox="2.8 2.8 18.4 18.4" aria-hidden="true" fill="#fff">
-      <g transform="rotate(-25 12 12)">
-        <rect x="11.4" y="9" width="1.2" height="12" rx="0.6"/>
-        <rect x="9.75" y="2.8" width="0.85" height="5" rx="0.42"/>
-        <rect x="11.575" y="2.8" width="0.85" height="5" rx="0.42"/>
-        <rect x="13.4" y="2.8" width="0.85" height="5" rx="0.42"/>
-        <path d="M9.6 7.2h4.8v0.4c0 1.5-1.1 2.3-2.4 2.3s-2.4-.8-2.4-2.3z"/>
+      <g transform="rotate(-42 12 12)">
+        <rect x="11.2" y="9" width="1.6" height="12" rx="0.8"/>
+        <rect x="9.5" y="2.8" width="1" height="5" rx="0.5"/>
+        <rect x="11.5" y="2.8" width="1" height="5" rx="0.5"/>
+        <rect x="13.5" y="2.8" width="1" height="5" rx="0.5"/>
+        <path d="M9.5 7.2h5v0.4c0 1.6-1.15 2.4-2.5 2.4s-2.5-.8-2.5-2.4z"/>
       </g>
-      <g transform="rotate(25 12 12)">
-        <rect x="11.4" y="9" width="1.2" height="12" rx="0.6"/>
-        <path d="M12 2.6C10.7 3.7 10.5 7.4 11.4 9.8L12.6 9.8C13.5 7.4 13.3 3.7 12 2.6Z"/>
+      <g transform="rotate(42 12 12)">
+        <rect x="11.2" y="9" width="1.6" height="12" rx="0.8"/>
+        <path d="M12 2.6C10.3 3.7 10.1 7.4 11.2 9.8L12.8 9.8C13.9 7.4 13.7 3.7 12 2.6Z"/>
       </g>
     </svg>`,
   },
