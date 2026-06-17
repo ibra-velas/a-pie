@@ -53,11 +53,11 @@ export default function App() {
     Object.entries(resources).filter(([sub]) => activeSubs.has(sub))
   )
 
-  async function search(address) {
+  async function search(address, region) {
     setLoading(true)
     setError(null)
     try {
-      const geoRes = await fetch(`/api/geocode?q=${encodeURIComponent(address)}`)
+      const geoRes = await fetch(`/api/geocode?q=${encodeURIComponent(address)}${region ? `&region=${region}` : ''}`)
       if (!geoRes.ok) { setError('Dirección no encontrada'); setLoading(false); return }
       const { lat, lon } = await geoRes.json()
       setOrigin({ lat, lon })

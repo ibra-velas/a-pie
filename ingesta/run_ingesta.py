@@ -11,7 +11,13 @@ load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
 # .strip() guards against trailing newlines pasted into the GitHub secret
 ENGINE = create_engine(os.environ["DATABASE_URL"].strip())
 
-TENERIFE_BBOX = dict(lat_min=27.9, lat_max=28.6, lon_min=-16.9, lon_max=-16.1)
+# Regions to ingest. bbox mirrors api/_regions.js and src/regions.js —
+# keep the three in sync. The purge is scoped per-region by this bbox, so
+# regions must not overlap (Tenerife and Málaga are ~900 km apart).
+REGIONS = [
+    dict(id="tenerife", lat_min=27.9,  lat_max=28.6,  lon_min=-16.9, lon_max=-16.1),
+    dict(id="malaga",   lat_min=36.55, lat_max=36.78, lon_min=-4.58, lon_max=-4.30),
+]
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
@@ -69,14 +75,15 @@ OSM_SOURCES = [
 ]
 
 
-def fetch_osm(key: str, value: str) -> list[dict] | None:
+def fetch_osm(key: str, value: str, region: dict) -> list[dict] | None:
     """Returns the element list, or None if Overpass failed after retries.
 
     The distinction matters: an empty list is a legitimate "OSM has none"
     (its stale rows deserve purging), while None means "we don't know" —
-    and the purge must be skipped for the whole run.
+    and the purge must be skipped for that region.
     """
-    bbox = "27.9,-16.9,28.6,-16.1"
+    bbox = (f"{region['lat_min']},{region['lon_min']},"
+            f"{region['lat_max']},{region['lon_max']}")
     query = f"""
     [out:json][timeout:60];
     (
@@ -98,7 +105,8 @@ def fetch_osm(key: str, value: str) -> list[dict] | None:
     return None
 
 
-def parse_osm(elements: list[dict], category: str, subcategory: str) -> list[dict]:
+def parse_osm(elements: list[dict], category: str, subcategory: str,
+              region: dict) -> list[dict]:
     rows = []
     for el in elements:
         # nodes have lat/lon directly; ways have a "center" object
@@ -106,9 +114,9 @@ def parse_osm(elements: list[dict], category: str, subcategory: str) -> list[dic
         lon = el.get("lon") or (el.get("center") or {}).get("lon")
         if lat is None or lon is None:
             continue
-        if not (TENERIFE_BBOX["lat_min"] <= lat <= TENERIFE_BBOX["lat_max"]):
+        if not (region["lat_min"] <= lat <= region["lat_max"]):
             continue
-        if not (TENERIFE_BBOX["lon_min"] <= lon <= TENERIFE_BBOX["lon_max"]):
+        if not (region["lon_min"] <= lon <= region["lon_max"]):
             continue
 
         tags = el.get("tags", {})
@@ -181,51 +189,62 @@ PURGE_THRESHOLD = "21 days"
 PURGE_MAX_FRACTION = 0.20
 
 
-def purge_stale():
+def purge_stale(region: dict):
+    # Scope the purge to this region's bbox so ingesting one region never
+    # touches another's rows. `&&` on a point uses the GIST index and is
+    # true iff the point falls inside the envelope.
+    rid = region["id"]
+    in_bbox = ("location && ST_MakeEnvelope("
+               "%(lon_min)s, %(lat_min)s, %(lon_max)s, %(lat_max)s, 4326)")
+    p = {k: region[k] for k in ("lon_min", "lat_min", "lon_max", "lat_max")}
     with ENGINE.begin() as conn:
         with conn.connection.cursor() as cur:
-            cur.execute("SELECT count(*) FROM resource WHERE source = 'osm'")
+            cur.execute(
+                f"SELECT count(*) FROM resource WHERE source = 'osm' AND {in_bbox}", p)
             total = cur.fetchone()[0]
             cur.execute(
-                "SELECT count(*) FROM resource WHERE source = 'osm' "
-                "AND updated_at < now() - interval %s", (PURGE_THRESHOLD,))
+                f"SELECT count(*) FROM resource WHERE source = 'osm' AND {in_bbox} "
+                "AND updated_at < now() - interval %(thr)s", {**p, "thr": PURGE_THRESHOLD})
             stale = cur.fetchone()[0]
             if stale == 0:
-                print("Purge: nothing stale")
+                print(f"Purge [{rid}]: nothing stale")
                 return
             if total and stale / total > PURGE_MAX_FRACTION:
-                print(f"Purge ABORTED: {stale}/{total} rows stale "
+                print(f"Purge [{rid}] ABORTED: {stale}/{total} rows stale "
                       f"(> {PURGE_MAX_FRACTION:.0%}) — check the ingestion")
                 return
             cur.execute(
-                "DELETE FROM resource WHERE source = 'osm' "
-                "AND updated_at < now() - interval %s", (PURGE_THRESHOLD,))
-            print(f"Purge: {stale} stale rows deleted (gone from OSM)")
+                f"DELETE FROM resource WHERE source = 'osm' AND {in_bbox} "
+                "AND updated_at < now() - interval %(thr)s", {**p, "thr": PURGE_THRESHOLD})
+            print(f"Purge [{rid}]: {stale} stale rows deleted (gone from OSM)")
 
 
 def run():
-    all_fetches_ok = True
-    for key, value, category, subcategory in OSM_SOURCES:
-        print(f"Fetching OSM {key}={value}...")
-        elements = fetch_osm(key, value)
-        if elements is None:
-            # Unknown state for this category — its rows weren't refreshed,
-            # so purging this week would delete live places
-            all_fetches_ok = False
-            print("  FAILED after retries — purge disabled for this run")
-            continue
-        rows = parse_osm(elements, category, subcategory)
-        upsert(rows)
-        print(f"  {len(rows)} records upserted")
-        time.sleep(2)  # be polite to Overpass
+    for region in REGIONS:
+        rid = region["id"]
+        print(f"=== Region: {rid} ===")
+        region_ok = True
+        for key, value, category, subcategory in OSM_SOURCES:
+            print(f"Fetching OSM {key}={value} [{rid}]...")
+            elements = fetch_osm(key, value, region)
+            if elements is None:
+                # Unknown state for this category — its rows weren't refreshed,
+                # so purging this region now would delete live places
+                region_ok = False
+                print("  FAILED after retries — purge disabled for this region")
+                continue
+            rows = parse_osm(elements, category, subcategory, region)
+            upsert(rows)
+            print(f"  {len(rows)} records upserted")
+            time.sleep(2)  # be polite to Overpass
 
-    # Purge only after the upserts, and only on a complete run: even after
-    # weeks of broken CI, the first good run refreshes everything alive
-    # before anything gets deleted
-    if all_fetches_ok:
-        purge_stale()
-    else:
-        print("Skipping purge: at least one Overpass fetch failed")
+        # Purge only after the upserts, and only on a complete region run:
+        # even after weeks of broken CI, the first good run refreshes
+        # everything alive before anything gets deleted
+        if region_ok:
+            purge_stale(region)
+        else:
+            print(f"Skipping purge [{rid}]: at least one Overpass fetch failed")
 
 
 if __name__ == "__main__":

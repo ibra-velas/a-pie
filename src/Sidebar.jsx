@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { CATEGORY_COLORS, GROUP_COLORS, SUB_COLORS, colorFor } from './Map'
+import { REGIONS, DEFAULT_REGION } from './regions'
 
 // Pills and list headers reuse the marker colors, but light ones (crema,
 // amarillo, verde manzana) are illegible as text on the cream panel.
@@ -103,61 +104,6 @@ export const ALL_SUBS = PILL_GROUPS.flatMap(g =>
   g.pills.flatMap(p => p.subs ?? [p.id])
 )
 
-const CITY_ZONES = [
-  {
-    zone: 'Metro',
-    cities: [
-      { label: 'Santa Cruz',    lat: 28.4682, lon: -16.2546 },
-      { label: 'La Laguna',     lat: 28.4869, lon: -16.3182 },
-      { label: 'La Cuesta',     lat: 28.4700, lon: -16.2900 },
-      { label: 'San Andrés',    lat: 28.5046, lon: -16.1910 },  // Calle Dique 27
-      { label: 'Taco',          lat: 28.4465, lon: -16.2993 },
-      { label: 'Tegueste',      lat: 28.5231, lon: -16.3365 },
-    ],
-  },
-  {
-    zone: 'Norte',
-    cities: [
-      { label: 'Tacoronte',         lat: 28.4768, lon: -16.4154 },
-      { label: 'La Matanza',        lat: 28.4482, lon: -16.4577 },
-      { label: 'La Orotava',        lat: 28.3936, lon: -16.5195 },
-      { label: 'Puerto de la Cruz', lat: 28.4170, lon: -16.5508 },
-      { label: 'Los Realejos',      lat: 28.3816, lon: -16.5842 },
-      { label: 'Icod de los Vinos', lat: 28.3692, lon: -16.7203 },
-      { label: 'Garachico',         lat: 28.3733, lon: -16.7659 },
-      { label: 'Buenavista',        lat: 28.3725, lon: -16.8514 },
-    ],
-  },
-  {
-    zone: 'Oeste',
-    cities: [
-      { label: 'Santiago del Teide', lat: 28.2970, lon: -16.8160 },
-      { label: 'Guía de Isora',      lat: 28.2081, lon: -16.7760 },
-    ],
-  },
-  {
-    zone: 'Sur',
-    cities: [
-      { label: 'Adeje',       lat: 28.1219, lon: -16.7259 },
-      { label: 'Costa Adeje', lat: 28.0786, lon: -16.7367 },
-      { label: 'Las Américas',lat: 28.0580, lon: -16.7280 },
-      { label: 'Los Cristianos', lat: 28.0503, lon: -16.7150 },
-      { label: 'Arona',       lat: 28.0073, lon: -16.6560 },
-      { label: 'Granadilla',  lat: 28.1193, lon: -16.5752 },
-      { label: 'El Médano',   lat: 28.0462, lon: -16.5384 },
-    ],
-  },
-  {
-    zone: 'Este',
-    cities: [
-      { label: 'Candelaria',         lat: 28.3568, lon: -16.3712 },
-      { label: 'Arafo',              lat: 28.3398, lon: -16.4186 },
-      { label: 'Güímar',             lat: 28.3187, lon: -16.4082 },
-      { label: 'Puertito de Güímar', lat: 28.2962, lon: -16.3746 },
-    ],
-  },
-]
-
 export default function Sidebar({
   isMobile, onSearch, onLocate,
   minutes, onMinutesChange,
@@ -170,7 +116,17 @@ export default function Sidebar({
   const [address, setAddress] = useState('La Laguna')
   const [locating, setLocating] = useState(false)
   const [filtersOpen, setFiltersOpen] = useState(true)
+  const [activeRegion, setActiveRegion] = useState(DEFAULT_REGION)
   const [selectedZone, setSelectedZone] = useState(null)
+
+  const region = REGIONS.find(r => r.id === activeRegion) ?? REGIONS[0]
+  // Switching region: collapse to its zones, but auto-open a lone zone
+  // (e.g. Málaga → Costa del Sol) so its cities show with one less tap
+  function pickRegion(id) {
+    setActiveRegion(id)
+    const r = REGIONS.find(x => x.id === id)
+    setSelectedZone(r && r.zones.length === 1 ? r.zones[0].zone : null)
+  }
   const selectedItemRef = useRef(null)
   const rootRef = useRef(null)
 
@@ -276,8 +232,8 @@ export default function Sidebar({
         <div style={{ marginBottom: 12 }}>
           {/* Brand image — includes illustration, title and tagline */}
           <img
-            src="/images/a-pie-logo.webp"
-            alt="A Pie · Vive tu barrio · Tenerife"
+            src={region.logo ?? '/images/a-pie-logo.webp'}
+            alt={`A Pie · Vive tu barrio · ${region.label}`}
             style={{
               display: 'block',
               width: '100%',
@@ -331,14 +287,14 @@ export default function Sidebar({
           <input
             value={address}
             onChange={e => setAddress(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && onSearch(address)}
+            onKeyDown={e => e.key === 'Enter' && onSearch(address, activeRegion)}
             placeholder="Tu dirección..."
-            title="Escribe una dirección en Tenerife y pulsa Enter"
+            title={`Escribe una dirección en ${region.label} y pulsa Enter`}
             style={{ flex: 1, padding: '0 12px', border: '1px solid #DCD5C9', borderRadius: 12, minWidth: 0,
               // 16px on mobile: anything smaller triggers iOS auto-zoom on focus
               fontSize: isMobile ? 16 : 13 }}
           />
-          <button onClick={() => onSearch(address)} disabled={loading}
+          <button onClick={() => onSearch(address, activeRegion)} disabled={loading}
             title="Buscar lugares en esta dirección"
             aria-label="Buscar lugares en esta dirección"
             style={{
@@ -351,11 +307,33 @@ export default function Sidebar({
           </button>
         </div>
 
-        {/* City shortcuts — zone → cities */}
+        {/* City shortcuts — region → zone → cities */}
         <div style={{ marginBottom: 8 }}>
+          {/* Region pills (only when there's more than one region) */}
+          {REGIONS.length > 1 && (
+            <div style={{ display: 'flex', gap: 4, marginBottom: 5 }}>
+              {REGIONS.map(({ id, label }) => {
+                const active = activeRegion === id
+                return (
+                  <button key={id}
+                    onClick={() => pickRegion(id)}
+                    title={`Ver ciudades de ${label}`}
+                    style={{
+                      fontSize: fz(11), padding: isMobile ? '5px 12px' : '3px 10px', borderRadius: 99, cursor: 'pointer',
+                      border: `1px solid ${active ? '#1C7A8A' : 'rgba(28,122,138,0.25)'}`,
+                      background: active ? 'rgba(28,122,138,0.13)' : '#fff',
+                      color: '#1C7A8A',
+                      fontWeight: active ? 700 : 500,
+                    }}>
+                    {label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
           {/* Zone pills */}
-          <div style={{ display: 'flex', gap: 4, marginBottom: 5 }}>
-            {CITY_ZONES.map(({ zone }) => {
+          <div style={{ display: 'flex', gap: 4, marginBottom: 5, flexWrap: 'wrap' }}>
+            {region.zones.map(({ zone }) => {
               const active = selectedZone === zone
               return (
                 <button key={zone}
@@ -376,7 +354,7 @@ export default function Sidebar({
           {/* City pills for selected zone */}
           {selectedZone && (
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-              {CITY_ZONES.find(z => z.zone === selectedZone)?.cities.map(city => {
+              {region.zones.find(z => z.zone === selectedZone)?.cities.map(city => {
                 // The clicked city lands in the address box — that's our selection marker
                 const active = address === city.label
                 return (

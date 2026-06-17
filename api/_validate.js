@@ -1,5 +1,10 @@
-// Tenerife bounding box — same limits the ingestion script enforces
-const BBOX = { latMin: 27.9, latMax: 28.6, lonMin: -16.9, lonMax: -16.1 }
+import { REGIONS } from './_regions.js'
+
+// True if the coordinate falls inside any covered region's bbox
+const inAnyRegion = (lat, lon) =>
+  REGIONS.some(({ bbox }) =>
+    lat >= bbox.latMin && lat <= bbox.latMax &&
+    lon >= bbox.lonMin && lon <= bbox.lonMax)
 
 // Returns { lat, lon, minutes } on success, or { error } for a 400 response.
 export function validateQuery(query) {
@@ -8,8 +13,8 @@ export function validateQuery(query) {
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
     return { error: 'Missing or invalid lat/lon' }
   }
-  if (lat < BBOX.latMin || lat > BBOX.latMax || lon < BBOX.lonMin || lon > BBOX.lonMax) {
-    return { error: 'Coordinates outside Tenerife' }
+  if (!inAnyRegion(lat, lon)) {
+    return { error: 'Coordinates outside coverage area' }
   }
   const minutes = query.minutes === undefined ? 10 : parseInt(query.minutes)
   if (!Number.isFinite(minutes)) {
