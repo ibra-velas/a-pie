@@ -60,7 +60,7 @@ export const SUB_COLORS = {
   estanco:       '#8E4A49',  // granate (la "T" del estanco)
   kiosko:        '#78909C',  // gris azulado (prensa)
   muebles:       '#6D4C41',  // marrón oscuro
-  electronica:   '#546E7A',  // pizarra
+  electronica:   '#90A4AE',  // gris azulado claro
   // Servicios
   taller:        '#37474F',  // gris acero
 }
@@ -96,7 +96,7 @@ const SUBCATEGORY_ICONS = {
   estetica:      '💅',
   papeleria:     '📎',
   estanco:       '🚬',
-  kiosko:        '🗞️',
+  kiosko:        '🍬',
   muebles:       '🛋️',
   electronica:   '🔌',
   // Servicios
