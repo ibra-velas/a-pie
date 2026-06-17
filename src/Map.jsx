@@ -221,7 +221,39 @@ function shapeFor(sub) {
   return 'circle'
 }
 
-function makeIcon(item, isSelected) {
+// At/above this zoom, non-selected markers show their full icon; below it they
+// collapse to a lightweight pushpin (round colored head + needle, no emoji/
+// shadow). Re-skinning happens only when the zoom crosses this threshold.
+const FULL_ZOOM = 16
+
+// Chincheta de cabeza redonda con aguja — el estado a zoom alejado. Solo el
+// color identitario de la subcategoría, sin emoji ni sombra; la punta de la
+// aguja (abajo) es la que se ancla a la ubicación.
+function makePushpinIcon(item) {
+  const color = colorFor(item)
+  const size = 15
+  const r = size / 2
+  const stem = Math.round(size * 0.95)
+  const H = size + stem
+  const cx = size / 2
+  const sw = Math.max(1.2, size * 0.12)
+  const top = size * 0.9
+  return L.divIcon({
+    className: '',
+    html: `<div style="transform:scale(var(--poi-scale, 1));transform-origin:center bottom;">
+      <svg width="${size}" height="${H}" viewBox="0 0 ${size} ${H}" style="display:block">
+        <polygon points="${cx - sw},${top} ${cx + sw},${top} ${cx},${H}" fill="#5b5b5b"/>
+        <circle cx="${cx}" cy="${r}" r="${r - 0.5}" fill="${color}"/>
+        <ellipse cx="${cx - r * 0.3}" cy="${r - r * 0.35}" rx="${r * 0.32}" ry="${r * 0.22}" fill="#fff" opacity="0.45"/>
+      </svg></div>`,
+    iconSize: [size, H],
+    iconAnchor: [size / 2, H],
+    tooltipAnchor: [0, -(H + 2)],
+  })
+}
+
+function makeIcon(item, isSelected, far) {
+  if (far && !isSelected) return makePushpinIcon(item)
   const custom = SUB_MARKER_STYLES[item.subcategory]
   const shape = shapeFor(item.subcategory)
   const size = isSelected ? 26 : 20
@@ -294,6 +326,8 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
   // not the JS built-in
   const markersById = useRef({})
   const selectedIdRef = useRef(null)
+  // Whether markers are currently in far/pushpin mode (zoom < FULL_ZOOM)
+  const farRef = useRef(false)
   // Keep the latest onSelect reachable from handlers registered once
   const onSelectRef = useRef(onSelect)
   onSelectRef.current = onSelect
@@ -313,7 +347,19 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
       const scale = Math.min(1.6, Math.max(1, 1 + (z - 14) * 0.15))
       mapRef.current.style.setProperty('--poi-scale', scale)
     }
-    leaflet.current.on('zoomend', applyMarkerScale)
+    farRef.current = leaflet.current.getZoom() < FULL_ZOOM
+    leaflet.current.on('zoomend', () => {
+      applyMarkerScale()
+      // Swap pushpin ↔ full icons only when the zoom crosses FULL_ZOOM, so the
+      // expensive ~700-marker re-skin happens once per crossing, not per zoom
+      const far = leaflet.current.getZoom() < FULL_ZOOM
+      if (far !== farRef.current) {
+        farRef.current = far
+        Object.values(markersById.current).forEach(({ marker, item }) => {
+          marker.setIcon(makeIcon(item, item.id === selectedIdRef.current, far))
+        })
+      }
+    })
     applyMarkerScale()
     // Tapping empty map clears the selection (markers don't bubble here)
     leaflet.current.on('click', () => onSelectRef.current(null))
@@ -378,7 +424,7 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     Object.values(resources).flat().forEach(item => {
       const isSel = item.id === selectedIdRef.current
       const [lon, lat] = item.location.coordinates
-      const marker = L.marker([lat, lon], { icon: makeIcon(item, isSel) })
+      const marker = L.marker([lat, lon], { icon: makeIcon(item, isSel, farRef.current) })
         .on('click', () => onSelectRef.current(item))
         // Selected marker keeps its name visible (permanent tooltip)
         .bindTooltip(item.name, { direction: 'top', offset: [0, 0], permanent: isSel })
@@ -393,14 +439,14 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
   useEffect(() => {
     const prev = markersById.current[selectedIdRef.current]
     if (prev) {
-      prev.marker.setIcon(makeIcon(prev.item, false))
+      prev.marker.setIcon(makeIcon(prev.item, false, farRef.current))
       prev.marker.setZIndexOffset(0)
       prev.marker.unbindTooltip()
       prev.marker.bindTooltip(prev.item.name, { direction: 'top', offset: [0, 0] })
     }
     const next = selected ? markersById.current[selected.id] : null
     if (next) {
-      next.marker.setIcon(makeIcon(next.item, true))
+      next.marker.setIcon(makeIcon(next.item, true, farRef.current))
       next.marker.setZIndexOffset(1000)
       next.marker.unbindTooltip()
       next.marker.bindTooltip(next.item.name, { direction: 'top', offset: [0, 0], permanent: true })
