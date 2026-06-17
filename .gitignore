@@ -6,6 +6,7 @@ __pycache__/
 node_modules/
 dist/
 .vercel
+.claude/
 
 # Internal docs — keep README only
 *.md
