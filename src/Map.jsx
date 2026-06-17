@@ -226,14 +226,16 @@ function shapeFor(sub) {
 // element each) — that is what keeps zoom/pan fluid in dense areas. At/above it
 // they become the full DOM pin/square/circle with icon.
 const FULL_ZOOM = 17
-// Canvas dot radius (px), fixed — does not grow with zoom
-const DOT_R = 5
-const DOT_R_SEL = 7
+// Canvas pin head radius (px), fixed — does not grow with zoom
+const DOT_R = 7
+const DOT_R_SEL = 9
 
 // Chincheta dibujada en canvas: misma velocidad que un circleMarker (un solo
 // lienzo para todos) pero con forma de pin — cabeza de color + aguja + brillo.
 // La punta de la aguja se ancla a la ubicación; el área de click es la cabeza.
 const NEEDLE = 1.6 // longitud de la aguja en múltiplos del radio de la cabeza
+// Offset del tooltip para que el nombre quede por encima de la cabeza del pin
+const farTipOffset = r => [0, -Math.round(r * (NEEDLE + 1) + r + 2)]
 const Pushpin = L.CircleMarker.extend({
   _headCenter() {
     const p = this._point
@@ -394,7 +396,10 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
           fillColor: c, fillOpacity: 1,
           stroke: isSel, color: '#fff', weight: isSel ? 2 : 0,
         }).addTo(canvasGroup.current)
-        if (isSel) cm.bringToFront()
+        if (isSel) {
+          cm.bringToFront()
+          cm.bindTooltip(item.name, { direction: 'top', permanent: true, offset: farTipOffset(DOT_R_SEL) }).openTooltip()
+        }
         markersById.current[item.id] = { marker: cm, item, canvas: true }
       } else {
         const marker = L.marker([lat, lon], { icon: makeIcon(item, isSel) })
@@ -523,6 +528,7 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     if (prev) {
       if (prev.canvas) {
         prev.marker.setStyle({ radius: DOT_R, stroke: false, weight: 0 })
+        prev.marker.unbindTooltip()
       } else {
         prev.marker.setIcon(makeIcon(prev.item, false))
         prev.marker.setZIndexOffset(0)
@@ -535,6 +541,7 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
       if (next.canvas) {
         next.marker.setStyle({ radius: DOT_R_SEL, stroke: true, color: '#fff', weight: 2 })
         next.marker.bringToFront()
+        next.marker.bindTooltip(next.item.name, { direction: 'top', permanent: true, offset: farTipOffset(DOT_R_SEL) }).openTooltip()
       } else {
         next.marker.setIcon(makeIcon(next.item, true))
         next.marker.setZIndexOffset(1000)
