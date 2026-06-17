@@ -240,22 +240,27 @@ function makeIcon(item, isSelected) {
   // down to the location; the glyph rides in a separate un-rotated layer so it
   // stays upright. Anchored at the tip; scales from the tip so it stays pinned.
   if (shape === 'teardrop') {
-    const h = Math.round(size * 1.21)
+    // `box` is the full disc diameter incl. border, matching the circle's
+    // total size (content-box width + border). Both the bulb and the glyph
+    // layer use border-box at `box`, so their centers coincide — otherwise the
+    // bulb's border offsets its center and the glyph drifts up-left.
+    const box = size + 2 * bw
+    const h = Math.round(box * 1.21)
     return L.divIcon({
       className: '',
       html: `<div style="
-        width:${size}px;height:${h}px;position:relative;cursor:pointer;
+        width:${box}px;height:${h}px;position:relative;cursor:pointer;
         transform:scale(var(--poi-scale, 1));transform-origin:center bottom;
         transition:transform 0.15s;">
-        <div style="position:absolute;left:0;top:0;width:${size}px;height:${size}px;
-          background:${bg};border:${bw}px solid ${ring};
+        <div style="position:absolute;left:0;top:0;width:${box}px;height:${box}px;
+          box-sizing:border-box;background:${bg};border:${bw}px solid ${ring};
           border-radius:50% 50% 50% 0;transform:rotate(-45deg);box-shadow:${shadow};"></div>
-        <div style="position:absolute;left:0;top:0;width:${size}px;height:${size}px;
+        <div style="position:absolute;left:0;top:0;width:${box}px;height:${box}px;
           display:flex;align-items:center;justify-content:center;font-size:${fontSize}px;">${content}</div>
       </div>`,
-      iconSize: [size, h],
-      iconAnchor: [size / 2, h],
-      tooltipAnchor: [0, -Math.round(size * 1.45)],
+      iconSize: [box, h],
+      iconAnchor: [box / 2, h],
+      tooltipAnchor: [0, -Math.round(box * 1.45)],
     })
   }
 
