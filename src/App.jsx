@@ -83,7 +83,14 @@ export default function App() {
     setError(null)
     try {
       const res = await fetch(`/api/resources?lat=${lat}&lon=${lon}&minutes=${mins}`, { signal: ctrl.signal })
-      if (!res.ok) { setError('Error cargando recursos'); return }
+      if (!res.ok) {
+        // 400 = coords outside every region's bbox (the only validation that
+        // trips here; minutes always come bounded from the slider)
+        setError(res.status === 400
+          ? 'Aún no cubrimos esta zona, disculpe las molestias'
+          : 'Error cargando recursos')
+        return
+      }
       const data = await res.json()
       setIsochrone(data.polygon)
       setResources(data.by_subcategory)
