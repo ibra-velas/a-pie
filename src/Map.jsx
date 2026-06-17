@@ -233,54 +233,54 @@ const DOT_R_SEL = 9
 // Chincheta dibujada en canvas: misma velocidad que un circleMarker (un solo
 // lienzo para todos) pero con forma de pin — cabeza de color + aguja + brillo.
 // La punta de la aguja se ancla a la ubicación; el área de click es la cabeza.
-const NEEDLE = 1.6 // longitud de la aguja en múltiplos del radio de la cabeza
-// Offset del tooltip para que el nombre quede por encima de la cabeza del pin
-const farTipOffset = r => [0, -Math.round(r * (NEEDLE + 1) + r + 2)]
+// El centro del anillo se dibuja r*HEAD_UP px por encima de la punta anclada
+const HEAD_UP = 2.4
+// Offset del tooltip para que el nombre quede por encima del anillo
+const farTipOffset = r => [0, -Math.round(r * HEAD_UP + r + 4)]
 const Pushpin = L.CircleMarker.extend({
   _headCenter() {
     const p = this._point
-    return L.point(p.x, p.y - this._radius * NEEDLE - this._radius)
+    return L.point(p.x, p.y - this._radius * HEAD_UP)
   },
   _updatePath() {
     const ctx = this._renderer && this._renderer._ctx
     if (!ctx) return
     const r = this._radius
     const p = this._point
-    const headBottomY = p.y - r * NEEDLE
     const head = this._headCenter()
-    // aguja (triángulo afilado hacia la punta = ubicación)
+    const color = this.options.fillColor
+    // aguja: triángulo que sale del anillo y se afila hasta la punta (ubicación)
     ctx.beginPath()
-    ctx.moveTo(p.x - r * 0.32, headBottomY)
-    ctx.lineTo(p.x + r * 0.32, headBottomY)
+    ctx.moveTo(p.x - r * 0.32, head.y + r * 0.55)
+    ctx.lineTo(p.x + r * 0.32, head.y + r * 0.55)
     ctx.lineTo(p.x, p.y)
     ctx.closePath()
-    ctx.fillStyle = '#5b5b5b'
+    ctx.fillStyle = color
     ctx.fill()
-    // cabeza
+    // anillo hueco: solo el trazo se pinta, el centro deja ver el mapa
     ctx.beginPath()
-    ctx.arc(head.x, head.y, r, 0, Math.PI * 2)
-    ctx.fillStyle = this.options.fillColor
-    ctx.fill()
-    if (this.options.stroke && this.options.weight) {
-      ctx.lineWidth = this.options.weight
-      ctx.strokeStyle = this.options.color
+    ctx.arc(head.x, head.y, r * 0.72, 0, Math.PI * 2)
+    ctx.lineWidth = r * 0.56
+    ctx.strokeStyle = color
+    ctx.stroke()
+    // resalte de selección: aro blanco fino por fuera
+    if (this.options.selected) {
+      ctx.beginPath()
+      ctx.arc(head.x, head.y, r, 0, Math.PI * 2)
+      ctx.lineWidth = 2
+      ctx.strokeStyle = '#fff'
       ctx.stroke()
     }
-    // brillo
-    ctx.beginPath()
-    ctx.arc(head.x - r * 0.3, head.y - r * 0.35, r * 0.32, 0, Math.PI * 2)
-    ctx.fillStyle = 'rgba(255,255,255,0.5)'
-    ctx.fill()
   },
-  // El área clicable es la cabeza (que está por encima de la punta anclada)
+  // El área clicable es el anillo (que está por encima de la punta anclada)
   _containsPoint(point) {
     return point.distanceTo(this._headCenter()) <= this._radius + this._clickTolerance()
   },
-  // Los bounds deben cubrir cabeza + aguja para que el cull/redraw no recorte
+  // Los bounds deben cubrir anillo + aguja para que el cull/redraw no recorte
   _updateBounds() {
-    const r = this._radius + (this.options.weight || 0) / 2
+    const r = this._radius + 2
     const p = this._point
-    const topY = p.y - r * NEEDLE - this._radius - r
+    const topY = p.y - this._radius * HEAD_UP - r
     this._pxBounds = new L.Bounds(L.point(p.x - r, topY), L.point(p.x + r, p.y))
   },
 })
@@ -395,8 +395,8 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
         const cm = new Pushpin([lat, lon], {
           renderer: canvasRenderer.current,
           radius: isSel ? DOT_R_SEL : DOT_R,
-          fillColor: c, fillOpacity: 1,
-          stroke: isSel, color: '#fff', weight: isSel ? 2 : 0,
+          fillColor: c,
+          selected: isSel,
         }).addTo(canvasGroup.current)
         if (isSel) {
           cm.bringToFront()
@@ -465,8 +465,8 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
           if (!canvas) continue
           const mp = leaflet.current.latLngToContainerPoint(marker.getLatLng())
           const r = marker.options.radius
-          // pin head sits r*(NEEDLE+1) px above the anchored tip
-          const head = L.point(mp.x, mp.y - r * (NEEDLE + 1))
+          // pin ring sits r*HEAD_UP px above the anchored tip
+          const head = L.point(mp.x, mp.y - r * HEAD_UP)
           const d = cp.distanceTo(head)
           if (d < bestD) { bestD = d; best = item; bestR = r }
         }
@@ -538,7 +538,7 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     const prev = markersById.current[selectedIdRef.current]
     if (prev) {
       if (prev.canvas) {
-        prev.marker.setStyle({ radius: DOT_R, stroke: false, weight: 0 })
+        prev.marker.setStyle({ radius: DOT_R, selected: false })
         prev.marker.unbindTooltip()
       } else {
         prev.marker.setIcon(makeIcon(prev.item, false))
@@ -550,7 +550,7 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     const next = selected ? markersById.current[selected.id] : null
     if (next) {
       if (next.canvas) {
-        next.marker.setStyle({ radius: DOT_R_SEL, stroke: true, color: '#fff', weight: 2 })
+        next.marker.setStyle({ radius: DOT_R_SEL, selected: true })
         next.marker.bringToFront()
         next.marker.bindTooltip(next.item.name, { direction: 'top', permanent: true, offset: farTipOffset(DOT_R_SEL) }).openTooltip()
       } else {
