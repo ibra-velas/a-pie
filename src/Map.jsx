@@ -41,7 +41,7 @@ export const SUB_COLORS = {
   hospital:      '#005EB8',
   // Ocio
   parque:        '#CDEBB0',  // verde muy claro, a petición — el 🌳 oscuro contrasta encima
-  discoteca:     '#9C27B0',  // morado vivo de ocio nocturno (la 🪩 brilla encima)
+  discoteca:     '#B388EB',  // lavanda, a juego con su marcador (copa de martini lavanda)
   // Tiendas
   supermercado:  '#8DB600',  // verde manzana, a petición
   tienda:        GROUP_COLORS.tiendas,
@@ -149,6 +149,16 @@ const SUB_MARKER_STYLES = {
       <circle cx="8" cy="21" r="1.4"/>
       <circle cx="19" cy="21" r="1.4"/>
       <path d="M2 2.5h2l2.66 12.4a2 2 0 0 0 2 1.6h9.7a2 2 0 0 0 1.95-1.57L22 7.5H5.1"/>
+    </svg>`,
+  },
+  // Copa de martini lavanda sobre disco morado oscuro (ocio nocturno)
+  discoteca: {
+    bg: '#2A1A3A',
+    glyph: s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" aria-hidden="true"
+      fill="none" stroke="#D6BCFA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 4h16l-8 9z"/>
+      <line x1="12" y1="13" x2="12" y2="20"/>
+      <line x1="8" y1="20" x2="16" y2="20"/>
     </svg>`,
   },
   // Fork & knife tops in white on saturated orange
