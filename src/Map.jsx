@@ -298,7 +298,7 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
   useEffect(() => {
     leaflet.current = L.map(mapRef.current, { maxZoom: 20 }).setView([28.485, -16.320], 12)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: '© OpenStreetMap © CARTO · Datos: Cabildo de Tenerife',
+      attribution: '© CARTO · Datos: © OpenStreetMap',
       maxZoom: 20,
     }).addTo(leaflet.current)
     leaflet.current.createPane('linePane').style.zIndex = 450
