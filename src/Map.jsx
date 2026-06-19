@@ -297,6 +297,105 @@ const Pushpin = L.CircleMarker.extend({
   },
 })
 
+// Tamaño de celda (px) para agrupar en rejilla a zoom lejano: puntos cuyas
+// posiciones proyectadas caen en la misma celda forman un cluster. ~56px deja
+// las burbujas separadas sin solaparse en pantallas densas.
+const CLUSTER_CELL = 56
+// Radio de la burbuja según cuántos POI agrupa (más grande = más dentro)
+function clusterRadius(count) {
+  if (count < 10) return 15
+  if (count < 50) return 19
+  if (count < 200) return 23
+  return 27
+}
+
+// Burbuja-contador dibujada en el mismo canvas que las chinchetas: disco del
+// color dominante + número blanco. Hereda de CircleMarker para reusar el
+// renderer canvas (un solo lienzo para chinchetas y clusters).
+const ClusterBubble = L.CircleMarker.extend({
+  _updatePath() {
+    const ctx = this._renderer && this._renderer._ctx
+    if (!ctx) return
+    const r = this._radius
+    const p = this._point
+    // disco relleno del color dominante
+    ctx.beginPath()
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2)
+    ctx.fillStyle = this.options.fillColor
+    ctx.fill()
+    // anillo blanco semitransparente para despegarlo del mapa
+    ctx.lineWidth = 2.5
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)'
+    ctx.stroke()
+    // número de POI agrupados
+    const n = this.options.count
+    ctx.fillStyle = '#fff'
+    ctx.font = `600 ${r > 20 ? 13 : 11}px system-ui, sans-serif`
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillText(n > 999 ? '999+' : String(n), p.x, p.y)
+  },
+  _containsPoint(point) {
+    return point.distanceTo(this._point) <= this._radius + this._clickTolerance()
+  },
+  _updateBounds() {
+    const r = this._radius + 2
+    const p = this._point
+    this._pxBounds = new L.Bounds(L.point(p.x - r, p.y - r), L.point(p.x + r, p.y + r))
+  },
+})
+
+// Agrupa puntos por rejilla en coordenadas proyectadas al zoom dado. Devuelve
+// una lista de clusters { lat, lon, items, bounds }. Estable bajo paneo (la
+// rejilla vive en el espacio proyectado, no en el viewport), así que solo hay
+// que recalcular al cambiar el zoom. `skipId` deja fuera el POI seleccionado
+// para que conserve su chincheta, tooltip y línea al origen.
+function clusterPoints(map, items, zoom, skipId) {
+  const cells = new Map()
+  const singles = []
+  for (const item of items) {
+    const [lon, lat] = item.location.coordinates
+    if (item.id === skipId) { singles.push(item); continue }
+    const p = map.project([lat, lon], zoom)
+    const key = `${Math.floor(p.x / CLUSTER_CELL)}:${Math.floor(p.y / CLUSTER_CELL)}`
+    let cell = cells.get(key)
+    if (!cell) { cell = []; cells.set(key, cell) }
+    cell.push(item)
+  }
+  const clusters = []
+  for (const cell of cells.values()) {
+    if (cell.length === 1) { singles.push(cell[0]); continue }
+    let sumLat = 0, sumLon = 0
+    let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity
+    for (const it of cell) {
+      const [lon, lat] = it.location.coordinates
+      sumLat += lat; sumLon += lon
+      if (lat < minLat) minLat = lat
+      if (lat > maxLat) maxLat = lat
+      if (lon < minLon) minLon = lon
+      if (lon > maxLon) maxLon = lon
+    }
+    clusters.push({
+      lat: sumLat / cell.length,
+      lon: sumLon / cell.length,
+      items: cell,
+      bounds: L.latLngBounds([[minLat, minLon], [maxLat, maxLon]]),
+    })
+  }
+  return { clusters, singles }
+}
+
+// Color de la burbuja = subcategoría más frecuente del cluster (color dominante)
+function dominantColor(items) {
+  const counts = {}
+  let best = null, bestN = 0
+  for (const it of items) {
+    const n = (counts[it.subcategory] = (counts[it.subcategory] || 0) + 1)
+    if (n > bestN) { bestN = n; best = it }
+  }
+  return best ? colorFor(best) : '#888'
+}
+
 function makeIcon(item, isSelected) {
   const custom = SUB_MARKER_STYLES[item.subcategory]
   const shape = shapeFor(item.subcategory)
@@ -372,6 +471,9 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
   const selectedIdRef = useRef(null)
   // Whether markers are currently in far mode (zoom < FULL_ZOOM → canvas pins)
   const farRef = useRef(false)
+  // Far-zoom clusters drawn this render: { marker, bounds } for the map click
+  // handler (tap a bubble → zoom to its members' bounds)
+  const clustersRef = useRef([])
   // Shared canvas renderer + layer group for the far-zoom dots
   const canvasRenderer = useRef(null)
   const canvasGroup = useRef(null)
@@ -393,19 +495,23 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     markerLayer.current.clearLayers()
     canvasGroup.current.clearLayers()
     markersById.current = {}
+    clustersRef.current = []
     const far = farRef.current
-    Object.values(resourcesRef.current).flat().forEach(item => {
-      const isSel = item.id === selectedIdRef.current
-      const [lon, lat] = item.location.coordinates
-      if (far) {
-        // No per-pin click handler: far-zoom selection is resolved at the map
-        // level (nearest pin to the tap) — more reliable than canvas hit-testing
-        // and more forgiving for tiny targets on mobile. See the map 'click'.
-        const c = colorFor(item)
+    const allItems = Object.values(resourcesRef.current).flat()
+    if (far) {
+      // Agrupa en rejilla al zoom actual; el seleccionado queda fuera para
+      // conservar su chincheta resaltada. Singles → Pushpin; grupos → burbuja,
+      // ambos en el mismo canvas. La selección far se resuelve en el map 'click'
+      // (chincheta o burbuja más cercana), no con handlers por marcador.
+      const zoom = leaflet.current.getZoom()
+      const { clusters, singles } = clusterPoints(leaflet.current, allItems, zoom, selectedIdRef.current)
+      singles.forEach(item => {
+        const isSel = item.id === selectedIdRef.current
+        const [lon, lat] = item.location.coordinates
         const cm = new Pushpin([lat, lon], {
           renderer: canvasRenderer.current,
           radius: isSel ? DOT_R_SEL : DOT_R,
-          fillColor: c,
+          fillColor: colorFor(item),
           selected: isSel,
         }).addTo(canvasGroup.current)
         if (isSel) {
@@ -413,15 +519,28 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
           cm.bindTooltip(item.name, { direction: 'top', permanent: true, offset: farTipOffset(DOT_R_SEL) }).openTooltip()
         }
         markersById.current[item.id] = { marker: cm, item, canvas: true }
-      } else {
+      })
+      clusters.forEach(cl => {
+        const bubble = new ClusterBubble([cl.lat, cl.lon], {
+          renderer: canvasRenderer.current,
+          radius: clusterRadius(cl.items.length),
+          fillColor: dominantColor(cl.items),
+          count: cl.items.length,
+        }).addTo(canvasGroup.current)
+        clustersRef.current.push({ marker: bubble, bounds: cl.bounds })
+      })
+    } else {
+      allItems.forEach(item => {
+        const isSel = item.id === selectedIdRef.current
+        const [lon, lat] = item.location.coordinates
         const marker = L.marker([lat, lon], { icon: makeIcon(item, isSel) })
           .on('click', () => onSelectRef.current(item))
           // Selected marker keeps its name visible (permanent tooltip)
           .bindTooltip(item.name, { direction: 'top', offset: [0, 0], permanent: isSel })
           .addTo(markerLayer.current)
         markersById.current[item.id] = { marker, item, canvas: false }
-      }
-    })
+      })
+    }
   }, [])
 
   useEffect(() => {
@@ -446,11 +565,15 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     farRef.current = leaflet.current.getZoom() < FULL_ZOOM
     leaflet.current.on('zoomend', () => {
       applyMarkerScale()
-      // Swap canvas dots ↔ full DOM icons only when the zoom crosses FULL_ZOOM,
-      // so the ~700-marker rebuild happens once per crossing, not per zoom
+      // Swap canvas dots ↔ full DOM icons when the zoom crosses FULL_ZOOM, and
+      // re-cluster while staying in far mode (grid cells are projected at the
+      // current zoom, so the grouping changes with it). Both cases just rebuild
+      // the shared canvas — cheap, and clustering keeps the node count low.
       const far = leaflet.current.getZoom() < FULL_ZOOM
       if (far !== farRef.current) {
         farRef.current = far
+        renderMarkers()
+      } else if (far) {
         renderMarkers()
       }
     })
@@ -461,6 +584,15 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     leaflet.current.on('click', (e) => {
       if (farRef.current) {
         const cp = e.containerPoint
+        // Burbujas primero: si el tap cae dentro de una, hace zoom a sus
+        // miembros (Google Maps), abriendo el cluster en vez de seleccionar
+        for (const { marker, bounds } of clustersRef.current) {
+          const mp = leaflet.current.latLngToContainerPoint(marker.getLatLng())
+          if (cp.distanceTo(mp) <= marker.options.radius + 8) {
+            leaflet.current.flyToBounds(bounds, { padding: [60, 60], maxZoom: FULL_ZOOM + 1 })
+            return
+          }
+        }
         let best = null, bestD = Infinity, bestR = DOT_R
         for (const { marker, item, canvas } of Object.values(markersById.current)) {
           if (!canvas) continue
@@ -536,33 +668,30 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
   // The tooltip is re-bound because `permanent` can't be toggled in place:
   // selected = name always visible, unselected = back to hover-only.
   useEffect(() => {
-    const prev = markersById.current[selectedIdRef.current]
-    if (prev) {
-      if (prev.canvas) {
-        prev.marker.setStyle({ radius: DOT_R, selected: false })
-        prev.marker.unbindTooltip()
-      } else {
-        prev.marker.setIcon(makeIcon(prev.item, false))
-        prev.marker.setZIndexOffset(0)
-        prev.marker.unbindTooltip()
-        prev.marker.bindTooltip(prev.item.name, { direction: 'top', offset: [0, 0] })
-      }
+    const prevId = selectedIdRef.current
+    selectedIdRef.current = selected?.id ?? null
+    // Far mode: the selected POI is kept out of clustering (own highlighted
+    // pin), and the previous one may now fall into a cluster — so re-cluster
+    // with the new skipId instead of restyling two markers.
+    if (farRef.current) {
+      renderMarkers()
+      return
+    }
+    const prev = markersById.current[prevId]
+    if (prev && !prev.canvas) {
+      prev.marker.setIcon(makeIcon(prev.item, false))
+      prev.marker.setZIndexOffset(0)
+      prev.marker.unbindTooltip()
+      prev.marker.bindTooltip(prev.item.name, { direction: 'top', offset: [0, 0] })
     }
     const next = selected ? markersById.current[selected.id] : null
-    if (next) {
-      if (next.canvas) {
-        next.marker.setStyle({ radius: DOT_R_SEL, selected: true })
-        next.marker.bringToFront()
-        next.marker.bindTooltip(next.item.name, { direction: 'top', permanent: true, offset: farTipOffset(DOT_R_SEL) }).openTooltip()
-      } else {
-        next.marker.setIcon(makeIcon(next.item, true))
-        next.marker.setZIndexOffset(1000)
-        next.marker.unbindTooltip()
-        next.marker.bindTooltip(next.item.name, { direction: 'top', offset: [0, 0], permanent: true })
-      }
+    if (next && !next.canvas) {
+      next.marker.setIcon(makeIcon(next.item, true))
+      next.marker.setZIndexOffset(1000)
+      next.marker.unbindTooltip()
+      next.marker.bindTooltip(next.item.name, { direction: 'top', offset: [0, 0], permanent: true })
     }
-    selectedIdRef.current = selected?.id ?? null
-  }, [selected])
+  }, [selected, renderMarkers])
 
   return (
     <div data-tour="map" style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>

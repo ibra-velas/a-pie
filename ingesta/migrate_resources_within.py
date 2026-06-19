@@ -3,7 +3,9 @@
 The old function capped at 100 rows per CATEGORY, so restaurante/bar/
 cafe/comida_rapida (all category 'ocio') shared one 100-row budget and
 dense areas showed only places within ~400m of the origin. Each
-subcategory now gets its own nearest-80 budget.
+subcategory now gets its own nearest-200 budget (raised from 80 once the
+map gained canvas clustering, so dense areas can show >1000 POI without
+the markers turning into an unreadable blob).
 """
 import os
 from dotenv import load_dotenv
@@ -32,7 +34,7 @@ AS $function$
         FROM resource
         WHERE ST_Within(location, ST_GeomFromGeoJSON(polygon_geojson))
     ) sub
-    WHERE rn <= 80
+    WHERE rn <= 200
     ORDER BY distance_m ASC;
 $function$
 """
@@ -40,4 +42,4 @@ $function$
 engine = create_engine(os.environ["DATABASE_URL"].strip())
 with engine.begin() as conn:
     conn.execute(text(SQL))
-print("resources_within: cap is now 80 per subcategory")
+print("resources_within: cap is now 200 per subcategory")
