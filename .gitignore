@@ -9,9 +9,8 @@ dist/
 .claude/
 estudio-iconos.html
 
-# Internal docs — keep README only
+# Internal docs — keep README only (CLAUDE.md is local-only, not committed)
 *.md
 *.txt
 !README.md
-!CLAUDE.md
 !ingesta/requirements.txt
