@@ -570,19 +570,25 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
       mapRef.current.style.setProperty('--poi-scale', scale)
     }
     farRef.current = leaflet.current.getZoom() < FULL_ZOOM
+    // Rebuilding ~1-2k markers (DOM↔canvas swap, or far re-cluster) is the one
+    // heavy op on zoom. On low-power Android, doing it synchronously inside
+    // zoomend froze the gesture in dense areas. Debounce it: a multi-step
+    // pinch-out fires several zoomends but rebuilds once, ~90ms after the last —
+    // past the zoom animation, so the gesture itself stays smooth.
+    let pendingRender = null
+    const scheduleRender = () => {
+      if (pendingRender) clearTimeout(pendingRender)
+      pendingRender = setTimeout(() => { pendingRender = null; renderMarkers() }, 90)
+    }
     leaflet.current.on('zoomend', () => {
       applyMarkerScale()
       // Swap canvas dots ↔ full DOM icons when the zoom crosses FULL_ZOOM, and
       // re-cluster while staying in far mode (grid cells are projected at the
-      // current zoom, so the grouping changes with it). Both cases just rebuild
-      // the shared canvas — cheap, and clustering keeps the node count low.
+      // current zoom, so the grouping changes with it).
       const far = leaflet.current.getZoom() < FULL_ZOOM
-      if (far !== farRef.current) {
-        farRef.current = far
-        renderMarkers()
-      } else if (far) {
-        renderMarkers()
-      }
+      const crossed = far !== farRef.current
+      farRef.current = far
+      if (crossed || far) scheduleRender()
     })
     applyMarkerScale()
     // Click handling. At far zoom the markers are canvas pins (no DOM node to
@@ -614,7 +620,7 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
       }
       onSelectRef.current(null)
     })
-    return () => leaflet.current.remove()
+    return () => { if (pendingRender) clearTimeout(pendingRender); leaflet.current.remove() }
   }, [])
 
   useEffect(() => {
