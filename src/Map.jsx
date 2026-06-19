@@ -351,19 +351,21 @@ const ClusterBubble = L.CircleMarker.extend({
 // que recalcular al cambiar el zoom. `skipId` deja fuera el POI seleccionado
 // para que conserve su chincheta, tooltip y línea al origen.
 function clusterPoints(map, items, zoom, skipId) {
-  const cells = new Map()
+  // Plain object, not `new Map()`: inside this module `Map` is the React
+  // component (see CLAUDE.md), so `new Map()` would instantiate the component.
+  const cells = {}
   const singles = []
   for (const item of items) {
     const [lon, lat] = item.location.coordinates
     if (item.id === skipId) { singles.push(item); continue }
     const p = map.project([lat, lon], zoom)
     const key = `${Math.floor(p.x / CLUSTER_CELL)}:${Math.floor(p.y / CLUSTER_CELL)}`
-    let cell = cells.get(key)
-    if (!cell) { cell = []; cells.set(key, cell) }
+    let cell = cells[key]
+    if (!cell) { cell = []; cells[key] = cell }
     cell.push(item)
   }
   const clusters = []
-  for (const cell of cells.values()) {
+  for (const cell of Object.values(cells)) {
     if (cell.length === 1) { singles.push(cell[0]); continue }
     let sumLat = 0, sumLon = 0
     let minLat = Infinity, maxLat = -Infinity, minLon = Infinity, maxLon = -Infinity
