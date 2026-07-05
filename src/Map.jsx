@@ -756,11 +756,20 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
       group.addTo(leaflet.current)
       routeLayer.current = group
       if (isNewRoute) {
-        leaflet.current.flyToBounds(L.latLngBounds(activeRoute.stops.map(s => [s.lat, s.lon])), {
+        const b = L.latLngBounds(activeRoute.stops.map(s => [s.lat, s.lon]))
+        const opts = {
           paddingTopLeft: [50, 50],
           paddingBottomRight: [50, Math.max(50, padBottom)],
           maxZoom: 16,
-        })
+        }
+        // Saltos largos (otra región, p. ej. Tenerife → Torremolinos): ir
+        // directo — el flyTo de Leaflet tarda una eternidad a 1.000+ km y
+        // se queda a medio camino en pantalla. El vuelo, para saltos cortos.
+        if (leaflet.current.getCenter().distanceTo(b.getCenter()) > 100000) {
+          leaflet.current.fitBounds(b, opts)
+        } else {
+          leaflet.current.flyToBounds(b, opts)
+        }
       }
     } else if (hadRouteRef.current) {
       hadRouteRef.current = false

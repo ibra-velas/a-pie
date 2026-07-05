@@ -160,5 +160,207 @@
       "minutes": 13,
       "meters": 1066
     }
+  },
+  {
+    "id": "tapa-torremolinos",
+    "label": "Ruta de la tapa · Centro de Torremolinos",
+    "short": "Ruta de la tapa",
+    "region": "malaga",
+    "municipality": "Torremolinos",
+    "description": "Seis bodegas y tascas del centro peatonal, entre la Plaza de Andalucía, la Nogalera y la Cuesta del Tajo. Vino de Málaga, ensaladilla y pescaíto — el orden ya está optimizado para andar lo mínimo.",
+    "published_at": "2026-07-05",
+    "stops": [
+      {
+        "name": "El Caballo Andaluz",
+        "hint": "Plaza de Andalucía",
+        "lat": 36.62442,
+        "lon": -4.49843
+      },
+      {
+        "name": "La Trastienda de Juan",
+        "hint": "Pasaje Gitanillas",
+        "lat": 36.62476,
+        "lon": -4.49794
+      },
+      {
+        "name": "Bodeguita Museo",
+        "hint": "Plaza de la Nogalera",
+        "lat": 36.62246,
+        "lon": -4.49972
+      },
+      {
+        "name": "Bodega El Colmao",
+        "hint": "Plaza de la Nogalera",
+        "lat": 36.62248,
+        "lon": -4.49893
+      },
+      {
+        "name": "La Bodega",
+        "hint": "Calle San Miguel",
+        "lat": 36.623,
+        "lon": -4.49827
+      },
+      {
+        "name": "Bodega Quitapenas",
+        "hint": "Cuesta del Tajo",
+        "lat": 36.62197,
+        "lon": -4.49718
+      }
+    ],
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          -4.49851,
+          36.62447
+        ],
+        [
+          -4.49818,
+          36.62484
+        ],
+        [
+          -4.49798,
+          36.62472
+        ],
+        [
+          -4.4976,
+          36.62448
+        ],
+        [
+          -4.49813,
+          36.62385
+        ],
+        [
+          -4.49805,
+          36.6238
+        ],
+        [
+          -4.49811,
+          36.62373
+        ],
+        [
+          -4.49817,
+          36.62365
+        ],
+        [
+          -4.49849,
+          36.62326
+        ],
+        [
+          -4.49861,
+          36.62313
+        ],
+        [
+          -4.49878,
+          36.62304
+        ],
+        [
+          -4.49887,
+          36.62294
+        ],
+        [
+          -4.499,
+          36.6227
+        ],
+        [
+          -4.49924,
+          36.62244
+        ],
+        [
+          -4.49957,
+          36.62263
+        ],
+        [
+          -4.49924,
+          36.62244
+        ],
+        [
+          -4.49911,
+          36.62258
+        ],
+        [
+          -4.499,
+          36.6227
+        ],
+        [
+          -4.49887,
+          36.62294
+        ],
+        [
+          -4.49878,
+          36.62304
+        ],
+        [
+          -4.49861,
+          36.62313
+        ],
+        [
+          -4.49849,
+          36.62326
+        ],
+        [
+          -4.49824,
+          36.62302
+        ],
+        [
+          -4.49778,
+          36.62258
+        ],
+        [
+          -4.49738,
+          36.62207
+        ],
+        [
+          -4.49737,
+          36.62201
+        ],
+        [
+          -4.4973,
+          36.62194
+        ],
+        [
+          -4.49719,
+          36.6219
+        ],
+        [
+          -4.49712,
+          36.62184
+        ],
+        [
+          -4.4971,
+          36.62185
+        ],
+        [
+          -4.49715,
+          36.62197
+        ]
+      ]
+    },
+    "legs": [
+      {
+        "minutes": 1,
+        "meters": 72
+      },
+      {
+        "minutes": 4,
+        "meters": 359
+      },
+      {
+        "minutes": 1,
+        "meters": 56
+      },
+      {
+        "minutes": 2,
+        "meters": 129
+      },
+      {
+        "minutes": 2,
+        "meters": 185
+      }
+    ],
+    "total": {
+      "minutes": 10,
+      "meters": 801
+    }
   }
 ]
