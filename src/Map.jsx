@@ -418,8 +418,11 @@ const flagSvg = (size, style = '') => `<svg width="${size}" height="${size}" vie
 // oscurece (resaltado sincronizado con el panel). Escala con --poi-scale.
 function routeStopIcon(n, isStart, isSelected) {
   const d = isSelected ? 32 : 26
+  // Mástil plantado en el centro-arriba del disco: en el SVG el mástil está a
+  // 5/24 del borde izquierdo, así que se descuenta ese offset del centro
+  const flagLeft = Math.round(d / 2 - 17 * (5 / 24))
   const flag = isStart
-    ? flagSvg(17, `style="position:absolute;left:${d - 9}px;top:-13px"`)
+    ? flagSvg(17, `style="position:absolute;left:${flagLeft}px;top:-13px"`)
     : ''
   return L.divIcon({
     className: '',
