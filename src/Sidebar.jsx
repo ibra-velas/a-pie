@@ -147,6 +147,7 @@ export default function Sidebar({
   loading, error,
   onShowLegal,
   activeRoute, onSelectRoute, onExitRoute,
+  routeStopIdx, onSelectStop,
 }) {
   const [address, setAddress] = useState('La Laguna')
   const [locating, setLocating] = useState(false)
@@ -176,6 +177,7 @@ export default function Sidebar({
   }
   const selectedItemRef = useRef(null)
   const routePanelRef = useRef(null)
+  const routeStopRef = useRef(null)
   const rootRef = useRef(null)
 
   // Mobile reads at arm's length: bump every font size by 2px
@@ -214,6 +216,22 @@ export default function Sidebar({
     const top = el.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop
     root.scrollTo({ top: Math.max(0, top - 10), behavior: 'smooth' })
   }, [activeRoute])
+
+  // Tocar una insignia en el mapa lleva el panel a esa parada (mismo scroll
+  // explícito de siempre: dentro del sheet, scrollIntoView no funciona).
+  // -90px de margen para que se vea también el tramo anterior.
+  useEffect(() => {
+    if (routeStopIdx == null) return
+    const el = routeStopRef.current
+    const root = rootRef.current
+    if (!el || !root) return
+    if (isMobile) {
+      const top = el.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop
+      root.scrollTo({ top: Math.max(0, top - 90), behavior: 'smooth' })
+    } else {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [routeStopIdx])
 
   async function handleLocate() {
     if (!navigator.geolocation) return
@@ -600,20 +618,31 @@ export default function Sidebar({
             )}
 
             {activeRoute.stops.map((stop, i) => (
-              <div key={`${stop.name}-${i}`}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0' }}>
+              <div key={`${stop.name}-${i}`} ref={i === routeStopIdx ? routeStopRef : null}>
+                <button onClick={() => onSelectStop?.(i)}
+                  title="Ver esta parada en el mapa"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+                    padding: '5px 6px', borderRadius: 8, cursor: 'pointer',
+                    border: 'none', textAlign: 'left', font: 'inherit', color: 'inherit',
+                    background: i === routeStopIdx ? '#FBEFE5' : 'transparent',
+                  }}>
                   <div style={{
-                    width: 22, height: 22, borderRadius: '50%', background: '#1C7A8A',
+                    width: 22, height: 22, borderRadius: '50%',
+                    background: i === routeStopIdx ? '#145A66' : '#1C7A8A',
                     color: '#fff', fontSize: fz(11), fontWeight: 700, flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     {i + 1}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: fz(13), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stop.name}</div>
+                    <div style={{
+                      fontSize: fz(13), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      fontWeight: i === routeStopIdx ? 700 : 400,
+                    }}>{stop.name}</div>
                     {stop.hint && <div style={{ fontSize: fz(10.5), color: '#9ca3af' }}>{stop.hint}</div>}
                   </div>
-                </div>
+                </button>
                 {/* Tramo hasta la siguiente parada */}
                 {activeRoute.legs?.[i] && (
                   <div style={{

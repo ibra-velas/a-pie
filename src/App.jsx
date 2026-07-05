@@ -20,6 +20,7 @@ export default function App() {
   const [error, setError] = useState(null)
   const [activeSubs, setActiveSubs] = useState(new Set(['bar', 'cafe', 'comida_rapida']))
   const [activeRoute, setActiveRoute] = useState(null)   // preset «Mi ruta» activo
+  const [routeStopIdx, setRouteStopIdx] = useState(null) // parada resaltada (índice)
   const [showLegal, setShowLegal] = useState(false)
   const [snap, setSnap] = useState(SNAP_POINTS[1])
   const debounceRef = useRef(null)
@@ -39,7 +40,19 @@ export default function App() {
   function selectRoute(preset) {
     setSelected(null)
     setActiveRoute(preset)
+    setRouteStopIdx(null)
     if (isMobile) setSnap(SNAP_POINTS[1])
+  }
+
+  function exitRoute() {
+    setActiveRoute(null)
+    setRouteStopIdx(null)
+  }
+
+  // Tocar una parada (insignia del mapa o renglón del panel) la resalta en
+  // ambos; repetir el toque, o tocar mapa vacío (null), la des-resalta
+  function toggleRouteStop(i) {
+    setRouteStopIdx(prev => (i === null || prev === i ? null : i))
   }
 
   function toggleSub(sub) {
@@ -163,7 +176,9 @@ export default function App() {
       onShowLegal={() => setShowLegal(true)}
       activeRoute={activeRoute}
       onSelectRoute={selectRoute}
-      onExitRoute={() => setActiveRoute(null)}
+      onExitRoute={exitRoute}
+      routeStopIdx={routeStopIdx}
+      onSelectStop={toggleRouteStop}
     />
   )
 
@@ -175,6 +190,8 @@ export default function App() {
       selected={selected}
       onSelect={select}
       activeRoute={activeRoute}
+      routeStopIdx={routeStopIdx}
+      onSelectStop={toggleRouteStop}
       padBottom={isMobile ? Math.round(window.innerHeight * (typeof snap === 'number' ? snap : 0.55)) : 40}
     />
   )

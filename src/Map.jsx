@@ -414,9 +414,10 @@ const flagSvg = (size, style = '') => `<svg width="${size}" height="${size}" vie
 </svg>`
 
 // Insignia numerada de parada de ruta: disco teal de marca con número blanco;
-// la salida (n=1) lleva el banderín plantado encima. Escala con --poi-scale.
-function routeStopIcon(n, isStart) {
-  const d = 26
+// la salida (n=1) lleva el banderín plantado encima. La seleccionada crece y
+// oscurece (resaltado sincronizado con el panel). Escala con --poi-scale.
+function routeStopIcon(n, isStart, isSelected) {
+  const d = isSelected ? 32 : 26
   const flag = isStart
     ? flagSvg(17, `style="position:absolute;left:${d - 9}px;top:-13px"`)
     : ''
@@ -425,10 +426,11 @@ function routeStopIcon(n, isStart) {
     html: `<div style="position:relative;width:${d}px;height:${d}px;
       transform:scale(var(--poi-scale, 1));transform-origin:center bottom;">
       ${flag}
-      <div style="width:${d}px;height:${d}px;box-sizing:border-box;background:#1C7A8A;
-        border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.35);
-        display:flex;align-items:center;justify-content:center;
-        color:#fff;font-weight:700;font-size:12px;font-family:system-ui,sans-serif;">${n}</div>
+      <div style="width:${d}px;height:${d}px;box-sizing:border-box;background:${isSelected ? '#145A66' : '#1C7A8A'};
+        border:${isSelected ? 3.5 : 3}px solid #fff;border-radius:50%;
+        box-shadow:0 2px ${isSelected ? 12 : 8}px rgba(0,0,0,${isSelected ? 0.5 : 0.35});
+        display:flex;align-items:center;justify-content:center;cursor:pointer;
+        color:#fff;font-weight:700;font-size:${isSelected ? 14 : 12}px;font-family:system-ui,sans-serif;">${n}</div>
     </div>`,
     iconSize: [d, d],
     iconAnchor: [d / 2, d / 2],
@@ -498,7 +500,7 @@ function makeIcon(item, isSelected) {
   })
 }
 
-export default function Map({ origin, isochrone, resources, selected, onSelect, activeRoute, padBottom = 40 }) {
+export default function Map({ origin, isochrone, resources, selected, onSelect, activeRoute, routeStopIdx, onSelectStop, padBottom = 40 }) {
   const mapRef = useRef(null)
   const leaflet = useRef(null)
   const isoLayer = useRef(null)
@@ -531,6 +533,11 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
   // seleccionar chinchetas/burbujas invisibles (viven en grupos desacoplados)
   const activeRouteRef = useRef(null)
   activeRouteRef.current = activeRoute
+  const onSelectStopRef = useRef(onSelectStop)
+  onSelectStopRef.current = onSelectStop
+  // Id de la ruta ya dibujada: el efecto de ruta también corre al cambiar solo
+  // el resaltado de parada, y el flyTo/desacople debe pasar una vez por ruta
+  const drawnRouteIdRef = useRef(null)
 
   // Build the active marker representation for the current zoom: at far zoom,
   // every non/selected point is a circleMarker on the shared canvas (fast);
@@ -639,7 +646,9 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     // click), so pick the nearest pin head to the tap; up close, DOM markers
     // fire their own click and this just clears the selection on empty taps.
     leaflet.current.on('click', (e) => {
-      if (activeRouteRef.current) return
+      // Con ruta activa: tocar mapa vacío des-resalta la parada (las insignias
+      // gestionan su propio click y no llegan aquí)
+      if (activeRouteRef.current) { onSelectStopRef.current?.(null); return }
       if (farRef.current) {
         const cp = e.containerPoint
         // Burbujas primero: si el tap cae dentro de una, hace zoom a sus
@@ -710,6 +719,8 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     if (!leaflet.current) return
     if (activeRoute) {
       hadRouteRef.current = true
+      const isNewRoute = drawnRouteIdRef.current !== activeRoute.id
+      drawnRouteIdRef.current = activeRoute.id
       // La ruta es la experiencia: fuera POIs (chinchetas, burbujas, iconos).
       // Se DESACOPLAN los grupos del mapa, no se reconstruyen — los rebuilds
       // de marcadores durante la ruta (pills, zoom) caen en grupos invisibles
@@ -728,19 +739,29 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
         ...(activeRoute.geometry ? {} : { dashArray: '7, 9' }),
       }).addTo(group)
       activeRoute.stops.forEach((s, i) => {
-        L.marker([s.lat, s.lon], { icon: routeStopIcon(i + 1, i === 0), zIndexOffset: 1500 })
-          .bindTooltip(s.name, { direction: 'top' })
+        const isSel = i === routeStopIdx
+        L.marker([s.lat, s.lon], {
+          icon: routeStopIcon(i + 1, i === 0, isSel),
+          zIndexOffset: isSel ? 2000 : 1500,
+        })
+          // Tocar una insignia resalta la parada aquí y en el panel (toggle);
+          // la seleccionada mantiene su nombre visible
+          .on('click', () => onSelectStopRef.current?.(i))
+          .bindTooltip(s.name, { direction: 'top', permanent: isSel })
           .addTo(group)
       })
       group.addTo(leaflet.current)
       routeLayer.current = group
-      leaflet.current.flyToBounds(L.latLngBounds(activeRoute.stops.map(s => [s.lat, s.lon])), {
-        paddingTopLeft: [50, 50],
-        paddingBottomRight: [50, Math.max(50, padBottom)],
-        maxZoom: 16,
-      })
+      if (isNewRoute) {
+        leaflet.current.flyToBounds(L.latLngBounds(activeRoute.stops.map(s => [s.lat, s.lon])), {
+          paddingTopLeft: [50, 50],
+          paddingBottomRight: [50, Math.max(50, padBottom)],
+          maxZoom: 16,
+        })
+      }
     } else if (hadRouteRef.current) {
       hadRouteRef.current = false
+      drawnRouteIdRef.current = null
       if (markerLayer.current) markerLayer.current.addTo(leaflet.current)
       if (canvasGroup.current) canvasGroup.current.addTo(leaflet.current)
       if (isoLayer.current) {
@@ -750,7 +771,9 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
         })
       }
     }
-  }, [activeRoute])
+    // routeStopIdx en deps: reconstruir ≤8 insignias por resaltado es trivial
+    // (nada que ver con el rebuild de ~1000 POIs que evitamos con `selected`)
+  }, [activeRoute, routeStopIdx])
 
   useEffect(() => {
     lineLayer.current?.remove()
