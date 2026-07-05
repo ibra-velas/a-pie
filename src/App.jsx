@@ -32,13 +32,14 @@ export default function App() {
     if (item && isMobile) setSnap(SNAP_POINTS[0])
   }
 
-  // Entrar en una ruta predefinida: limpia la selección de POI y colapsa el
-  // sheet a peek para que el flyTo al pueblo se vea. Es un modo de exploración:
+  // Entrar en una ruta predefinida: limpia la selección de POI y deja el sheet
+  // a media altura — la tarjeta de la ruta y el mapa se ven a la vez (Goal.jpg;
+  // en peek la tarjeta quedaba enterrada abajo). Es un modo de exploración:
   // no toca origen ni isócrona, que se restauran al salir.
   function selectRoute(preset) {
     setSelected(null)
     setActiveRoute(preset)
-    if (isMobile) setSnap(SNAP_POINTS[0])
+    if (isMobile) setSnap(SNAP_POINTS[1])
   }
 
   function toggleSub(sub) {

@@ -527,6 +527,10 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
   // Keep the latest onSelect reachable from handlers registered once
   const onSelectRef = useRef(onSelect)
   onSelectRef.current = onSelect
+  // Con ruta activa los POIs están ocultos: el click del mapa no debe poder
+  // seleccionar chinchetas/burbujas invisibles (viven en grupos desacoplados)
+  const activeRouteRef = useRef(null)
+  activeRouteRef.current = activeRoute
 
   // Build the active marker representation for the current zoom: at far zoom,
   // every non/selected point is a circleMarker on the shared canvas (fast);
@@ -635,6 +639,7 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     // click), so pick the nearest pin head to the tap; up close, DOM markers
     // fire their own click and this just clears the selection on empty taps.
     leaflet.current.on('click', (e) => {
+      if (activeRouteRef.current) return
       if (farRef.current) {
         const cp = e.containerPoint
         // Burbujas primero: si el tap cae dentro de una, hace zoom a sus
@@ -705,6 +710,12 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
     if (!leaflet.current) return
     if (activeRoute) {
       hadRouteRef.current = true
+      // La ruta es la experiencia: fuera POIs (chinchetas, burbujas, iconos).
+      // Se DESACOPLAN los grupos del mapa, no se reconstruyen — los rebuilds
+      // de marcadores durante la ruta (pills, zoom) caen en grupos invisibles
+      // y al salir se reenganchan tal cual, sin coste.
+      if (markerLayer.current) leaflet.current.removeLayer(markerLayer.current)
+      if (canvasGroup.current) leaflet.current.removeLayer(canvasGroup.current)
       const group = L.layerGroup()
       // Sin geometría curada aún (curate_route.mjs pendiente): tramos rectos
       // discontinuos entre paradas como borrador visible en desarrollo
@@ -730,6 +741,8 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
       })
     } else if (hadRouteRef.current) {
       hadRouteRef.current = false
+      if (markerLayer.current) markerLayer.current.addTo(leaflet.current)
+      if (canvasGroup.current) canvasGroup.current.addTo(leaflet.current)
       if (isoLayer.current) {
         leaflet.current.fitBounds(isoLayer.current.getBounds(), {
           paddingTopLeft: [40, 40],
