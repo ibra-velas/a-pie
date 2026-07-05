@@ -19,6 +19,7 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [activeSubs, setActiveSubs] = useState(new Set(['bar', 'cafe', 'comida_rapida']))
+  const [activeRoute, setActiveRoute] = useState(null)   // preset «Mi ruta» activo
   const [showLegal, setShowLegal] = useState(false)
   const [snap, setSnap] = useState(SNAP_POINTS[1])
   const debounceRef = useRef(null)
@@ -29,6 +30,15 @@ export default function App() {
   function select(item) {
     setSelected(item)
     if (item && isMobile) setSnap(SNAP_POINTS[0])
+  }
+
+  // Entrar en una ruta predefinida: limpia la selección de POI y colapsa el
+  // sheet a peek para que el flyTo al pueblo se vea. Es un modo de exploración:
+  // no toca origen ni isócrona, que se restauran al salir.
+  function selectRoute(preset) {
+    setSelected(null)
+    setActiveRoute(preset)
+    if (isMobile) setSnap(SNAP_POINTS[0])
   }
 
   function toggleSub(sub) {
@@ -81,6 +91,9 @@ export default function App() {
     abortRef.current = ctrl
     setLoading(true)
     setError(null)
+    // Buscar de nuevo (dirección, geolocalización o slider) sale del modo ruta:
+    // si no, el fitBounds de la nueva isócrona pelearía con la cámara de la ruta
+    setActiveRoute(null)
     try {
       const res = await fetch(`/api/resources?lat=${lat}&lon=${lon}&minutes=${mins}`, { signal: ctrl.signal })
       if (!res.ok) {
@@ -147,6 +160,9 @@ export default function App() {
       loading={loading}
       error={error}
       onShowLegal={() => setShowLegal(true)}
+      activeRoute={activeRoute}
+      onSelectRoute={selectRoute}
+      onExitRoute={() => setActiveRoute(null)}
     />
   )
 
@@ -157,6 +173,7 @@ export default function App() {
       resources={filteredResources}
       selected={selected}
       onSelect={select}
+      activeRoute={activeRoute}
       padBottom={isMobile ? Math.round(window.innerHeight * (typeof snap === 'number' ? snap : 0.55)) : 40}
     />
   )

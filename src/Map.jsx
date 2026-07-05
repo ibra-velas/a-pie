@@ -403,6 +403,39 @@ function dominantColor(items) {
   return best ? colorFor(best) : '#888'
 }
 
+// Banderín a cuadros de las rutas (dibujado a mano, no Lucide): el símbolo de
+// la salida y de la sección «Rutas». Damero 3×2 blanco/negro con mástil oscuro.
+const flagSvg = (size, style = '') => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" ${style}
+  fill="none" stroke="#2B2B2B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  <rect x="5" y="3" width="14" height="9" fill="#fff"/>
+  <path d="M5 3h4.67v4.5H5z M14.33 3H19v4.5h-4.67z M9.67 7.5h4.66V12H9.67z" fill="#2B2B2B" stroke="none"/>
+  <rect x="5" y="3" width="14" height="9"/>
+  <path d="M5 22V3"/>
+</svg>`
+
+// Insignia numerada de parada de ruta: disco teal de marca con número blanco;
+// la salida (n=1) lleva el banderín plantado encima. Escala con --poi-scale.
+function routeStopIcon(n, isStart) {
+  const d = 26
+  const flag = isStart
+    ? flagSvg(17, `style="position:absolute;left:${d - 9}px;top:-13px"`)
+    : ''
+  return L.divIcon({
+    className: '',
+    html: `<div style="position:relative;width:${d}px;height:${d}px;
+      transform:scale(var(--poi-scale, 1));transform-origin:center bottom;">
+      ${flag}
+      <div style="width:${d}px;height:${d}px;box-sizing:border-box;background:#1C7A8A;
+        border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.35);
+        display:flex;align-items:center;justify-content:center;
+        color:#fff;font-weight:700;font-size:12px;font-family:system-ui,sans-serif;">${n}</div>
+    </div>`,
+    iconSize: [d, d],
+    iconAnchor: [d / 2, d / 2],
+    tooltipAnchor: [0, -(d / 2 + 5)],
+  })
+}
+
 function makeIcon(item, isSelected) {
   const custom = SUB_MARKER_STYLES[item.subcategory]
   const shape = shapeFor(item.subcategory)
@@ -465,13 +498,17 @@ function makeIcon(item, isSelected) {
   })
 }
 
-export default function Map({ origin, isochrone, resources, selected, onSelect, padBottom = 40 }) {
+export default function Map({ origin, isochrone, resources, selected, onSelect, activeRoute, padBottom = 40 }) {
   const mapRef = useRef(null)
   const leaflet = useRef(null)
   const isoLayer = useRef(null)
   const markerLayer = useRef(null)
   const originMarker = useRef(null)
   const lineLayer = useRef(null)
+  const routeLayer = useRef(null)
+  // Distingue "salir de una ruta" (restaurar la vista de la isócrona) del
+  // primer render con activeRoute=null (no tocar la cámara)
+  const hadRouteRef = useRef(false)
   // Plain object on purpose: `Map` here resolves to this component,
   // not the JS built-in
   const markersById = useRef({})
@@ -557,6 +594,9 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
       maxZoom: 20,
     }).addTo(leaflet.current)
     leaflet.current.createPane('linePane').style.zIndex = 450
+    // Polilínea de ruta: sobre la isócrona (400) y la línea al origen (450),
+    // bajo las chinchetas canvas (460); las insignias van en markerPane (600)
+    leaflet.current.createPane('routePane').style.zIndex = 455
     // Dots live above the isochrone polygon (overlayPane, z400) so clicks reach
     // them; otherwise the polygon swallows the click and nothing gets selected
     leaflet.current.createPane('dotPane').style.zIndex = 460
@@ -654,6 +694,50 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
       paddingBottomRight: [40, padBottom],
     })
   }, [isochrone])
+
+  // Ruta activa (preset «Mi ruta»): polilínea peatonal con halo blanco +
+  // insignias numeradas 1…N, y flyTo a sus bounds. Al salir, restaura la vista
+  // de la isócrona si la había. maxZoom 16 se queda bajo FULL_ZOOM: los POI
+  // siguen en modo canvas (fluido) y la ruta se lee entera.
+  useEffect(() => {
+    routeLayer.current?.remove()
+    routeLayer.current = null
+    if (!leaflet.current) return
+    if (activeRoute) {
+      hadRouteRef.current = true
+      const group = L.layerGroup()
+      // Sin geometría curada aún (curate_route.mjs pendiente): tramos rectos
+      // discontinuos entre paradas como borrador visible en desarrollo
+      const latlngs = activeRoute.geometry
+        ? activeRoute.geometry.coordinates.map(([lon, lat]) => [lat, lon])
+        : activeRoute.stops.map(s => [s.lat, s.lon])
+      L.polyline(latlngs, { pane: 'routePane', color: '#fff', weight: 7, opacity: 0.9, interactive: false }).addTo(group)
+      L.polyline(latlngs, {
+        pane: 'routePane', color: '#1C7A8A', weight: 4, opacity: 0.95, interactive: false,
+        ...(activeRoute.geometry ? {} : { dashArray: '7, 9' }),
+      }).addTo(group)
+      activeRoute.stops.forEach((s, i) => {
+        L.marker([s.lat, s.lon], { icon: routeStopIcon(i + 1, i === 0), zIndexOffset: 1500 })
+          .bindTooltip(s.name, { direction: 'top' })
+          .addTo(group)
+      })
+      group.addTo(leaflet.current)
+      routeLayer.current = group
+      leaflet.current.flyToBounds(L.latLngBounds(activeRoute.stops.map(s => [s.lat, s.lon])), {
+        paddingTopLeft: [50, 50],
+        paddingBottomRight: [50, Math.max(50, padBottom)],
+        maxZoom: 16,
+      })
+    } else if (hadRouteRef.current) {
+      hadRouteRef.current = false
+      if (isoLayer.current) {
+        leaflet.current.fitBounds(isoLayer.current.getBounds(), {
+          paddingTopLeft: [40, 40],
+          paddingBottomRight: [40, padBottom],
+        })
+      }
+    }
+  }, [activeRoute])
 
   useEffect(() => {
     lineLayer.current?.remove()

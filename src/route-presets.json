@@ -1,0 +1,164 @@
+[
+  {
+    "id": "tapa-la-laguna",
+    "label": "Ruta de la tapa · Casco de La Laguna",
+    "short": "Ruta de la tapa",
+    "region": "tenerife",
+    "municipality": "San Cristóbal de La Laguna",
+    "description": "Seis tascas y bodegones del casco histórico, de la Maquila a la calle Viana. Tapa y vino en cada parada — el orden ya está optimizado para andar lo mínimo.",
+    "published_at": "2026-07-05",
+    "stops": [
+      {
+        "name": "Tasca Maquila",
+        "hint": "Callejón Maquila",
+        "lat": 28.48901,
+        "lon": -16.31928
+      },
+      {
+        "name": "Tasca El Obispado",
+        "hint": "Calle Herradores",
+        "lat": 28.48931,
+        "lon": -16.31877
+      },
+      {
+        "name": "Tocuyo",
+        "hint": "Calle Juan de Vera",
+        "lat": 28.49033,
+        "lon": -16.31629
+      },
+      {
+        "name": "La Tasca de los Patos",
+        "hint": "Calle Dean Palahi",
+        "lat": 28.48913,
+        "lon": -16.31576
+      },
+      {
+        "name": "Bodegón Viana",
+        "hint": "Calle Viana",
+        "lat": 28.48914,
+        "lon": -16.31444
+      },
+      {
+        "name": "Tasca 61",
+        "hint": "Calle Viana 61",
+        "lat": 28.49093,
+        "lon": -16.31365
+      }
+    ],
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          -16.31931,
+          28.48897
+        ],
+        [
+          -16.31922,
+          28.48892
+        ],
+        [
+          -16.3192,
+          28.48891
+        ],
+        [
+          -16.31893,
+          28.48936
+        ],
+        [
+          -16.31879,
+          28.48928
+        ],
+        [
+          -16.3181,
+          28.48889
+        ],
+        [
+          -16.31784,
+          28.48931
+        ],
+        [
+          -16.31762,
+          28.48971
+        ],
+        [
+          -16.31735,
+          28.49026
+        ],
+        [
+          -16.31643,
+          28.48995
+        ],
+        [
+          -16.31633,
+          28.49034
+        ],
+        [
+          -16.31643,
+          28.48995
+        ],
+        [
+          -16.3166,
+          28.48937
+        ],
+        [
+          -16.31578,
+          28.48909
+        ],
+        [
+          -16.31532,
+          28.48893
+        ],
+        [
+          -16.31457,
+          28.48867
+        ],
+        [
+          -16.3144,
+          28.48913
+        ],
+        [
+          -16.31435,
+          28.48926
+        ],
+        [
+          -16.31417,
+          28.48963
+        ],
+        [
+          -16.31391,
+          28.49022
+        ],
+        [
+          -16.31361,
+          28.49092
+        ]
+      ]
+    },
+    "legs": [
+      {
+        "minutes": 1,
+        "meters": 85
+      },
+      {
+        "minutes": 5,
+        "meters": 391
+      },
+      {
+        "minutes": 2,
+        "meters": 197
+      },
+      {
+        "minutes": 2,
+        "meters": 180
+      },
+      {
+        "minutes": 3,
+        "meters": 213
+      }
+    ],
+    "total": {
+      "minutes": 13,
+      "meters": 1066
+    }
+  }
+]

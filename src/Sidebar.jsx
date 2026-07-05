@@ -1,6 +1,15 @@
 import { useState, useEffect, useRef } from 'react'
 import { CATEGORY_COLORS, GROUP_COLORS, SUB_COLORS, colorFor } from './Map'
 import { REGIONS, DEFAULT_REGION } from './regions'
+import ROUTE_PRESETS from './route-presets.json'
+
+// Rutas ya vistas (para el punto de «nueva») — catálogo goteado, ver
+// docs/proyecto-mi-ruta.md: el badge sale de comparar el catálogo con esto
+const SEEN_ROUTES_KEY = 'a-pie-rutas-vistas'
+function loadSeenRoutes() {
+  try { return new Set(JSON.parse(localStorage.getItem(SEEN_ROUTES_KEY) || '[]')) }
+  catch { return new Set() }
+}
 
 // Pills and list headers reuse the marker colors, but light ones (crema,
 // amarillo, verde manzana) are illegible as text on the cream panel.
@@ -31,6 +40,20 @@ function LocateIcon({ spinning }) {
       <line x1="12" y1="19" x2="12" y2="22.5" />
       <line x1="1.5" y1="12" x2="5" y2="12" />
       <line x1="19" y1="12" x2="22.5" y2="12" />
+    </svg>
+  )
+}
+
+// Banderín a cuadros — símbolo de las rutas (side quest, no planificador).
+// Dibujado a mano en el estilo de trazo de la casa; gemelo del flagSvg de Map.
+function FlagIcon({ size = 13 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#2B2B2B"
+      strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="5" y="3" width="14" height="9" fill="#fff" />
+      <path d="M5 3h4.67v4.5H5z M14.33 3H19v4.5h-4.67z M9.67 7.5h4.66V12H9.67z" fill="#2B2B2B" stroke="none" />
+      <rect x="5" y="3" width="14" height="9" />
+      <path d="M5 22V3" />
     </svg>
   )
 }
@@ -123,12 +146,25 @@ export default function Sidebar({
   selected, onSelect,
   loading, error,
   onShowLegal,
+  activeRoute, onSelectRoute, onExitRoute,
 }) {
   const [address, setAddress] = useState('La Laguna')
   const [locating, setLocating] = useState(false)
   const [filtersOpen, setFiltersOpen] = useState(true)
   const [activeRegion, setActiveRegion] = useState(DEFAULT_REGION)
   const [selectedZone, setSelectedZone] = useState(null)
+  const [seenRoutes, setSeenRoutes] = useState(loadSeenRoutes)
+
+  const regionRoutes = ROUTE_PRESETS.filter(p => p.region === activeRegion)
+
+  function pickRoute(preset) {
+    if (!seenRoutes.has(preset.id)) {
+      const next = new Set(seenRoutes).add(preset.id)
+      setSeenRoutes(next)
+      try { localStorage.setItem(SEEN_ROUTES_KEY, JSON.stringify([...next])) } catch {}
+    }
+    onSelectRoute(preset)
+  }
 
   const region = REGIONS.find(r => r.id === activeRegion) ?? REGIONS[0]
   // Switching region: collapse to its zones, but auto-open a lone zone
@@ -139,6 +175,7 @@ export default function Sidebar({
     setSelectedZone(r && r.zones.length === 1 ? r.zones[0].zone : null)
   }
   const selectedItemRef = useRef(null)
+  const routePanelRef = useRef(null)
   const rootRef = useRef(null)
 
   // Mobile reads at arm's length: bump every font size by 2px
@@ -163,6 +200,20 @@ export default function Sidebar({
       el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
   }, [selected])
+
+  // Entrar en una ruta lleva el panel a la tarjeta de la ruta (en móvil el
+  // sheet está en peek: mismo truco de scroll explícito que la selección,
+  // scrollIntoView no funciona dentro del sheet — vaul traslada, no recorta).
+  // Salir devuelve el panel arriba, a los controles.
+  useEffect(() => {
+    const root = rootRef.current
+    if (!root) return
+    if (!activeRoute) { root.scrollTo({ top: 0, behavior: 'smooth' }); return }
+    const el = routePanelRef.current
+    if (!el) return
+    const top = el.getBoundingClientRect().top - root.getBoundingClientRect().top + root.scrollTop
+    root.scrollTo({ top: Math.max(0, top - 10), behavior: 'smooth' })
+  }, [activeRoute])
 
   async function handleLocate() {
     if (!navigator.geolocation) return
@@ -389,6 +440,51 @@ export default function Sidebar({
           )}
         </div>
 
+        {/* Rutas predefinidas — «Mi ruta», modo un botón. Mismo lenguaje de
+            pills que las ciudades; el banderín es el símbolo de la sección */}
+        {regionRoutes.length > 0 && (
+          <div style={{ marginBottom: 8 }}>
+            <div style={{
+              fontSize: fz(10), fontWeight: 600, color: '#9ca3af',
+              textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5,
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              <FlagIcon size={12} /> Rutas
+            </div>
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              {regionRoutes.map(preset => {
+                const active = activeRoute?.id === preset.id
+                const isNew = !seenRoutes.has(preset.id)
+                return (
+                  <button key={preset.id}
+                    onClick={() => active ? onExitRoute() : pickRoute(preset)}
+                    title={active ? 'Salir de la ruta' : `Ver la ${preset.label}`}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 6,
+                      fontSize: fz(11), padding: isMobile ? '5px 12px' : '3px 10px', borderRadius: 99,
+                      border: `1px solid ${active ? '#1C7A8A' : 'rgba(28,122,138,0.25)'}`,
+                      background: active ? 'rgba(28,122,138,0.13)' : '#fff',
+                      color: '#1C7A8A', cursor: 'pointer', whiteSpace: 'nowrap',
+                      fontWeight: active ? 700 : 500,
+                    }}>
+                    <FlagIcon size={11} />
+                    {preset.short ?? preset.label}
+                    {isNew && (
+                      <span style={{
+                        fontSize: fz(9), fontWeight: 700, color: '#fff',
+                        background: '#D85A30', borderRadius: 99, padding: '1px 6px',
+                        letterSpacing: '0.03em',
+                      }}>
+                        nueva
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {error && <div style={{ fontSize: fz(12), color: '#D85A30', marginBottom: 8 }}>{error}</div>}
 
         {/* Minute slider */}
@@ -464,9 +560,81 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* ── Results list ── */}
+      {/* ── Results list / route panel ── */}
       <div style={{ flex: 1, overflowY: isMobile ? 'visible' : 'auto', padding: '10px 14px' }}>
-        {totalCount > 0 && (
+        {activeRoute && (
+          <div ref={routePanelRef} style={{
+            background: '#fff', border: '1px solid rgba(28,122,138,0.25)',
+            borderRadius: 12, padding: '12px 14px', marginBottom: 16,
+          }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+              <div style={{ flexShrink: 0, marginTop: 2 }}><FlagIcon size={16} /></div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: fz(13), fontWeight: 700, color: '#1C7A8A' }}>{activeRoute.label}</div>
+                <div style={{ fontSize: fz(11), color: '#9ca3af' }}>{activeRoute.municipality}</div>
+              </div>
+              <button onClick={onExitRoute}
+                aria-label="Salir de la ruta" title="Salir de la ruta"
+                style={{
+                  border: 'none', background: 'none', cursor: 'pointer',
+                  color: '#9ca3af', fontSize: fz(14), padding: '0 2px', flexShrink: 0,
+                }}>
+                ✕
+              </button>
+            </div>
+
+            {activeRoute.description && (
+              <p style={{ fontSize: fz(11.5), color: '#4b5563', lineHeight: 1.5, margin: '8px 0 10px' }}>
+                {activeRoute.description}
+              </p>
+            )}
+
+            {activeRoute.total && (
+              <div style={{
+                display: 'inline-block', marginBottom: 10, padding: '3px 10px',
+                background: 'rgba(28,122,138,0.09)', borderRadius: 99,
+                fontSize: fz(11), fontWeight: 600, color: '#1C7A8A',
+              }}>
+                {activeRoute.total.minutes} min andando · {(activeRoute.total.meters / 1000).toFixed(1).replace('.', ',')} km · {activeRoute.stops.length} paradas
+              </div>
+            )}
+
+            {activeRoute.stops.map((stop, i) => (
+              <div key={`${stop.name}-${i}`}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0' }}>
+                  <div style={{
+                    width: 22, height: 22, borderRadius: '50%', background: '#1C7A8A',
+                    color: '#fff', fontSize: fz(11), fontWeight: 700, flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {i + 1}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: fz(13), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{stop.name}</div>
+                    {stop.hint && <div style={{ fontSize: fz(10.5), color: '#9ca3af' }}>{stop.hint}</div>}
+                  </div>
+                </div>
+                {/* Tramo hasta la siguiente parada */}
+                {activeRoute.legs?.[i] && (
+                  <div style={{
+                    fontSize: fz(10.5), color: '#8A7F70', padding: '0 0 2px 8px',
+                    borderLeft: '2px dotted rgba(28,122,138,0.4)', marginLeft: 10,
+                  }}>
+                    {activeRoute.legs[i].minutes} min · {activeRoute.legs[i].meters} m
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {!activeRoute.geometry && (
+              <div style={{ fontSize: fz(10.5), color: '#D85A30', marginTop: 8 }}>
+                Ruta pendiente de calcular (curate_route.mjs) — el trazado del mapa es provisional.
+              </div>
+            )}
+          </div>
+        )}
+
+        {!activeRoute && totalCount > 0 && (
           <div style={{ fontSize: fz(11), color: '#9ca3af', marginBottom: 10 }}>
             {filteredCount === totalCount
               ? `${totalCount} lugares en ${minutes} min a pie`
@@ -474,7 +642,7 @@ export default function Sidebar({
           </div>
         )}
 
-        {resultGroups.map(({ sub, label, color, items }) => (
+        {!activeRoute && resultGroups.map(({ sub, label, color, items }) => (
           <div key={sub} style={{ marginBottom: 16 }}>
             <div style={{ fontSize: fz(11), fontWeight: 600, color, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
               {label} · {items.length}
@@ -578,7 +746,7 @@ export default function Sidebar({
             near the end of the list can't (not enough content below them) —
             this spacer guarantees the scroll range. Removed on deselect, which
             scrolls back to the controls anyway. */}
-        {isMobile && selected && <div aria-hidden="true" style={{ height: '75vh', flexShrink: 0 }} />}
+        {isMobile && (selected || activeRoute) && <div aria-hidden="true" style={{ height: '75vh', flexShrink: 0 }} />}
       </div>
     </div>
   )

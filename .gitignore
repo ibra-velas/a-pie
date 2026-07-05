@@ -8,6 +8,7 @@ dist/
 .vercel
 .claude/
 estudio-iconos.html
+estadistica-peluquerias.html
 
 # Internal docs — keep README only (CLAUDE.md is local-only, not committed)
 *.md
