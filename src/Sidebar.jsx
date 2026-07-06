@@ -96,10 +96,32 @@ export function RouteCard({ route, stopIdx, onSelectStop, onExit, isMobile, floa
         </button>
       </div>
 
+      {/* Chip informativo opcional (feria, campaña…) — más cálido que la
+          píldora teal del total para que se lea como aviso editorial */}
+      {route.chip?.text && (
+        <div style={{
+          display: 'inline-block', marginTop: 8, padding: '3px 10px',
+          background: 'rgba(224,160,32,0.16)', borderRadius: 99,
+          fontSize: fz(11), fontWeight: 700, color: '#8A6414',
+        }}>
+          {route.chip.text}
+        </div>
+      )}
+
       {route.description && (
         <p style={{ fontSize: fz(11.5), color: '#4b5563', lineHeight: 1.5, margin: '8px 0 10px' }}>
           {route.description}
         </p>
+      )}
+
+      {/* Cartel opcional (jpg/png en public/carteles/) — tocable a tamaño real */}
+      {route.chip?.image && (
+        <a href={route.chip.image} target="_blank" rel="noopener noreferrer"
+          title="Ver el cartel a tamaño completo"
+          style={{ display: 'block', marginBottom: 10 }}>
+          <img src={route.chip.image} alt={route.chip.text ?? 'Cartel de la ruta'}
+            style={{ maxWidth: '100%', borderRadius: 10, border: '1px solid #DCD5C9', display: 'block' }} />
+        </a>
       )}
 
       {route.total && (
