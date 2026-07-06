@@ -58,14 +58,26 @@ export default function InstallButton({ isMobile = false }) {
         boxShadow: '0 6px 20px rgba(28,122,138,0.35)',
       }}
     >
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M12 13V7" />
-        <path d="m15 10-3 3-3-3" />
-        <rect width="20" height="14" x="2" y="3" rx="2" />
-        <path d="M12 17v4" />
-        <path d="M8 21h8" />
-      </svg>
+      {/* El dispositivo del icono es el que tienes en la mano: teléfono en
+          móvil, monitor en escritorio (como los variants del install de Chrome) */}
+      {isMobile ? (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect width="14" height="20" x="5" y="2" rx="2" />
+          <path d="M12 7v6" />
+          <path d="m15 10-3 3-3-3" />
+          <path d="M12 18h.01" />
+        </svg>
+      ) : (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M12 13V7" />
+          <path d="m15 10-3 3-3-3" />
+          <rect width="20" height="14" x="2" y="3" rx="2" />
+          <path d="M12 17v4" />
+          <path d="M8 21h8" />
+        </svg>
+      )}
     </button>
   )
 }
