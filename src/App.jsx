@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { Drawer } from 'vaul'
 import Map from './Map'
 import Sidebar, { ALL_SUBS, RouteCard, RouteChip } from './Sidebar'
@@ -9,6 +9,14 @@ import useIsMobile from './useIsMobile'
 
 // Bottom-sheet heights (fraction of viewport): peek / half / expanded
 const SNAP_POINTS = [0.22, 0.55, 0.93]
+
+// Editor de rutas de campo (solo Ibrahim): se entra con la URL secreta
+// https://a-pie.vercel.app/#editor-perenquen-3847 — no hay enlaces hacia él y
+// el código solo se descarga si el hash coincide (import() dinámico). No es
+// seguridad real (nada en una web estática lo es), pero el editor tampoco
+// tiene poder: no escribe en ningún sitio, solo exporta JSON al portapapeles.
+const EDITOR_HASH = '#editor-perenquen-3847'
+const RouteEditor = lazy(() => import('./RouteEditor'))
 
 export default function App() {
   const [origin, setOrigin] = useState(null)
@@ -23,9 +31,16 @@ export default function App() {
   const [routeStopIdx, setRouteStopIdx] = useState(null) // parada resaltada (índice)
   const [showLegal, setShowLegal] = useState(false)
   const [snap, setSnap] = useState(SNAP_POINTS[1])
+  const [editorMode, setEditorMode] = useState(() => window.location.hash === EDITOR_HASH)
   const debounceRef = useRef(null)
   const abortRef = useRef(null)
   const isMobile = useIsMobile()
+
+  useEffect(() => {
+    const onHash = () => setEditorMode(window.location.hash === EDITOR_HASH)
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
 
   // Selecting a place collapses the sheet so the map (and the marker) is visible
   function select(item) {
@@ -196,6 +211,14 @@ export default function App() {
       routePadRight={isMobile ? 50 : 370}
     />
   )
+
+  if (editorMode) {
+    return (
+      <Suspense fallback={<div style={{ ...shellStyle, height: '100vh' }} />}>
+        <RouteEditor onExit={() => { window.location.hash = '' }} />
+      </Suspense>
+    )
+  }
 
   if (isMobile) {
     return (
