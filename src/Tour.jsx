@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 const STEPS = [
   {
     title: '👋 Bienvenido a A Pie',
-    body: 'Esta app te muestra todo lo que tienes a pocos minutos caminando desde cualquier dirección de Tenerife o la Costa del Sol. Empezamos con un ejemplo en La Laguna.',
+    body: 'Esta app te muestra todo lo que tienes a pocos minutos caminando: tiendas, comida, salud, cultura… Empezamos con un ejemplo en La Laguna.',
   },
   {
     selector: '[data-tour="address"]',
