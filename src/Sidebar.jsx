@@ -160,6 +160,49 @@ export function RouteCard({ route, stopIdx, onSelectStop, onExit, isMobile, floa
   )
 }
 
+// Chip flotante del modo ruta en móvil: con el sheet en peek siempre queda a
+// la vista qué ruta está activa y una salida (✕) sin tener que desplegar el
+// panel. Tocar el cuerpo del chip sube el sheet a media altura (la tarjeta).
+// La tarjeta completa NO va flotante en móvil: no hay esquina sobrante y
+// competiría con el sheet — el chip es la versión mínima que sí cabe.
+export function RouteChip({ route, onOpen, onExit }) {
+  return (
+    <div style={{
+      position: 'fixed', top: 12, left: '50%', transform: 'translateX(-50%)',
+      zIndex: 1100, display: 'flex', alignItems: 'center', gap: 4,
+      background: '#fff', border: '1px solid rgba(28,122,138,0.35)',
+      borderRadius: 99, padding: '5px 6px 5px 14px',
+      boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
+      maxWidth: 'calc(100vw - 24px)',
+    }}>
+      <button onClick={onOpen}
+        title="Ver la tarjeta de la ruta"
+        style={{
+          display: 'flex', alignItems: 'center', gap: 8, minWidth: 0,
+          border: 'none', background: 'none', padding: 0, cursor: 'pointer', font: 'inherit',
+        }}>
+        <span style={{ flexShrink: 0, display: 'flex' }}><FlagIcon size={15} /></span>
+        <span style={{
+          fontSize: 15, fontWeight: 700, color: '#1C7A8A',
+          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+        }}>
+          {route.short ?? route.label}
+        </span>
+      </button>
+      <button onClick={onExit}
+        aria-label="Salir de la ruta" title="Salir de la ruta"
+        style={{
+          width: 30, height: 30, borderRadius: 99, flexShrink: 0,
+          border: 'none', background: 'rgba(28,122,138,0.08)', cursor: 'pointer',
+          color: '#1C7A8A', fontSize: 14, lineHeight: 1,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+        ✕
+      </button>
+    </div>
+  )
+}
+
 function SearchIcon() {
   return (
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff"

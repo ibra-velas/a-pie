@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Drawer } from 'vaul'
 import Map from './Map'
-import Sidebar, { ALL_SUBS, RouteCard } from './Sidebar'
+import Sidebar, { ALL_SUBS, RouteCard, RouteChip } from './Sidebar'
 import Tour from './Tour'
 import Legal from './Legal'
 import InstallButton from './InstallButton'
@@ -201,6 +201,15 @@ export default function App() {
     return (
       <div style={{ ...shellStyle, display: 'flex', height: '100vh' }}>
         {map}
+        {/* Chip flotante: nombre de la ruta + salida siempre visibles aunque
+            el sheet esté en peek; tocarlo sube el sheet a la tarjeta */}
+        {activeRoute && (
+          <RouteChip
+            route={activeRoute}
+            onOpen={() => setSnap(SNAP_POINTS[1])}
+            onExit={exitRoute}
+          />
+        )}
         <Drawer.Root
           open
           modal={false}
