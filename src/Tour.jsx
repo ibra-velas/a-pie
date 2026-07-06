@@ -3,12 +3,12 @@ import { useState, useEffect } from 'react'
 const STEPS = [
   {
     title: '👋 Bienvenido a A Pie',
-    body: 'Esta app te muestra todo lo que tienes a pocos minutos caminando desde una dirección en Tenerife. Empezamos con un ejemplo en La Laguna.',
+    body: 'Esta app te muestra todo lo que tienes a pocos minutos caminando desde cualquier dirección de Tenerife o la Costa del Sol. Empezamos con un ejemplo en La Laguna.',
   },
   {
     selector: '[data-tour="address"]',
     title: '📍 Tu dirección',
-    body: 'Escribe una dirección o pulsa el botón 📍 para usar tu ubicación GPS.',
+    body: 'Escribe una dirección o pulsa el botón de ubicación para usar tu GPS.',
   },
   {
     selector: '[data-tour="minutes"]',
@@ -19,6 +19,11 @@ const STEPS = [
     selector: '[data-tour="filters"]',
     title: '🍽️ Filtros',
     body: 'Pulsa aquí para filtrar por tipo de lugar: bares, farmacias, parques, librerías... y muchos más.',
+  },
+  {
+    selector: '[data-tour="rutas"]',
+    title: '🏁 Rutas',
+    body: 'Paseos con las paradas ya elegidas y el orden optimizado — como la Ruta de la tapa. Toca el banderín y déjate llevar. Cada poco estrenamos una nueva.',
   },
   {
     selector: '[data-tour="map"]',
@@ -49,7 +54,9 @@ export default function Tour() {
     }
     const update = () => {
       const el = document.querySelector(current.selector)
-      if (el) setRect(el.getBoundingClientRect())
+      // Sin elemento (p. ej. región sin rutas): tarjeta centrada, sin anillo —
+      // si no, el anillo se queda clavado en el objetivo del paso anterior
+      setRect(el ? el.getBoundingClientRect() : null)
     }
     update()
     window.addEventListener('resize', update)

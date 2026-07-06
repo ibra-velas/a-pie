@@ -628,7 +628,7 @@ export default function Sidebar({
         {/* Rutas predefinidas — «Mi ruta», modo un botón. Mismo lenguaje de
             pills que las ciudades; el banderín es el símbolo de la sección */}
         {regionRoutes.length > 0 && (
-          <div style={{ marginBottom: 8 }}>
+          <div data-tour="rutas" style={{ marginBottom: 8 }}>
             <div style={{
               fontSize: fz(10), fontWeight: 600, color: '#9ca3af',
               textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5,
