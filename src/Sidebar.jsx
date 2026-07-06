@@ -516,7 +516,8 @@ export default function Sidebar({
             title="Desliza para cambiar cuántos minutos quieres caminar" />
         </div>
 
-        {/* Filter toggle */}
+        {/* Filter toggle — hidden while a route is active (POIs are detached from the map) */}
+        {!activeRoute && (
         <button onClick={() => setFiltersOpen(o => !o)}
           data-tour="filters"
           title="Mostrar u ocultar filtros por tipo de lugar"
@@ -533,9 +534,10 @@ export default function Sidebar({
           </svg>
           {filtersOpen ? 'Ocultar filtros' : 'Filtrar por tipo'}
         </button>
+        )}
 
         {/* Grouped pills — shown when open */}
-        {filtersOpen && (
+        {!activeRoute && filtersOpen && (
           <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6 }}>
               <button onClick={() => onToggleGroup(ALL_SUBS)}
