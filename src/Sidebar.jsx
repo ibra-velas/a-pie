@@ -58,6 +58,108 @@ function FlagIcon({ size = 13 }) {
   )
 }
 
+// Tarjeta de la ruta activa (cabecera + total + paradas + tramos). Se usa en
+// dos contenedores: dentro del sheet en móvil y, en escritorio, flotando sobre
+// la esquina superior derecha del mapa a lo Google Maps (ver App.jsx). Misma
+// tarjeta, distinto posicionamiento — el contenedor decide vía `style`.
+export function RouteCard({ route, stopIdx, onSelectStop, onExit, isMobile, floating = false, panelRef, stopRef, style }) {
+  const fz = base => (isMobile ? base + 2 : base)
+  const floatStopRef = useRef(null)
+
+  // En modo flotante la tarjeta tiene su propio scroll y scrollIntoView sí
+  // funciona (no hay sheet de vaul de por medio); en móvil el scroll lo hace
+  // Sidebar sobre el contenedor del panel con el truco explícito de siempre.
+  useEffect(() => {
+    if (floating && stopIdx != null) {
+      floatStopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [floating, stopIdx])
+
+  return (
+    <div ref={panelRef} style={{
+      background: '#fff', border: '1px solid rgba(28,122,138,0.25)',
+      borderRadius: 12, padding: '12px 14px', ...style,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+        <div style={{ flexShrink: 0, marginTop: 2 }}><FlagIcon size={16} /></div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: fz(13), fontWeight: 700, color: '#1C7A8A' }}>{route.label}</div>
+          <div style={{ fontSize: fz(11), color: '#9ca3af' }}>{route.municipality}</div>
+        </div>
+        <button onClick={onExit}
+          aria-label="Salir de la ruta" title="Salir de la ruta"
+          style={{
+            border: 'none', background: 'none', cursor: 'pointer',
+            color: '#9ca3af', fontSize: fz(14), padding: '0 2px', flexShrink: 0,
+          }}>
+          ✕
+        </button>
+      </div>
+
+      {route.description && (
+        <p style={{ fontSize: fz(11.5), color: '#4b5563', lineHeight: 1.5, margin: '8px 0 10px' }}>
+          {route.description}
+        </p>
+      )}
+
+      {route.total && (
+        <div style={{
+          display: 'inline-block', marginBottom: 10, padding: '3px 10px',
+          background: 'rgba(28,122,138,0.09)', borderRadius: 99,
+          fontSize: fz(11), fontWeight: 600, color: '#1C7A8A',
+        }}>
+          {route.total.minutes} min andando · {(route.total.meters / 1000).toFixed(1).replace('.', ',')} km · {route.stops.length} paradas
+        </div>
+      )}
+
+      {route.stops.map((stop, i) => (
+        <div key={`${stop.name}-${i}`}
+          ref={i === stopIdx ? (el) => { floatStopRef.current = el; if (stopRef) stopRef.current = el } : null}>
+          <button onClick={() => onSelectStop?.(i)}
+            title="Ver esta parada en el mapa"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 10, width: '100%',
+              padding: '5px 6px', borderRadius: 8, cursor: 'pointer',
+              border: 'none', textAlign: 'left', font: 'inherit', color: 'inherit',
+              background: i === stopIdx ? '#FBEFE5' : 'transparent',
+            }}>
+            <div style={{
+              width: 22, height: 22, borderRadius: '50%',
+              background: i === stopIdx ? '#145A66' : '#1C7A8A',
+              color: '#fff', fontSize: fz(11), fontWeight: 700, flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {i + 1}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: fz(13), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                fontWeight: i === stopIdx ? 700 : 400,
+              }}>{stop.name}</div>
+              {stop.hint && <div style={{ fontSize: fz(10.5), color: '#9ca3af' }}>{stop.hint}</div>}
+            </div>
+          </button>
+          {/* Tramo hasta la siguiente parada */}
+          {route.legs?.[i] && (
+            <div style={{
+              fontSize: fz(10.5), color: '#8A7F70', padding: '0 0 2px 8px',
+              borderLeft: '2px dotted rgba(28,122,138,0.4)', marginLeft: 10,
+            }}>
+              {route.legs[i].minutes} min · {route.legs[i].meters} m
+            </div>
+          )}
+        </div>
+      ))}
+
+      {!route.geometry && (
+        <div style={{ fontSize: fz(10.5), color: '#D85A30', marginTop: 8 }}>
+          Ruta pendiente de calcular (curate_route.mjs) — el trazado del mapa es provisional.
+        </div>
+      )}
+    </div>
+  )
+}
+
 function SearchIcon() {
   return (
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff"
@@ -505,7 +607,9 @@ export default function Sidebar({
 
         {error && <div style={{ fontSize: fz(12), color: '#D85A30', marginBottom: 8 }}>{error}</div>}
 
-        {/* Minute slider */}
+        {/* Minute slider — oculto en modo ruta: moverlo lanza una búsqueda y
+            te saca de la ruta sin avisar (control trampa si queda visible) */}
+        {!activeRoute && (
         <div data-tour="minutes" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}
              title="Cuántos minutos estás dispuesto a caminar">
           <span style={{ fontSize: fz(14), fontWeight: 700, color: '#1C7A8A', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>{minutes} min a pie</span>
@@ -515,6 +619,7 @@ export default function Sidebar({
             aria-label="Minutos dispuesto a caminar"
             title="Desliza para cambiar cuántos minutos quieres caminar" />
         </div>
+        )}
 
         {/* Filter toggle — hidden while a route is active (POIs are detached from the map) */}
         {!activeRoute && (
@@ -582,87 +687,28 @@ export default function Sidebar({
 
       {/* ── Results list / route panel ── */}
       <div style={{ flex: 1, overflowY: isMobile ? 'visible' : 'auto', padding: '10px 14px' }}>
-        {activeRoute && (
-          <div ref={routePanelRef} style={{
-            background: '#fff', border: '1px solid rgba(28,122,138,0.25)',
-            borderRadius: 12, padding: '12px 14px', marginBottom: 16,
-          }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-              <div style={{ flexShrink: 0, marginTop: 2 }}><FlagIcon size={16} /></div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: fz(13), fontWeight: 700, color: '#1C7A8A' }}>{activeRoute.label}</div>
-                <div style={{ fontSize: fz(11), color: '#9ca3af' }}>{activeRoute.municipality}</div>
-              </div>
-              <button onClick={onExitRoute}
-                aria-label="Salir de la ruta" title="Salir de la ruta"
-                style={{
-                  border: 'none', background: 'none', cursor: 'pointer',
-                  color: '#9ca3af', fontSize: fz(14), padding: '0 2px', flexShrink: 0,
-                }}>
-                ✕
-              </button>
-            </div>
-
-            {activeRoute.description && (
-              <p style={{ fontSize: fz(11.5), color: '#4b5563', lineHeight: 1.5, margin: '8px 0 10px' }}>
-                {activeRoute.description}
-              </p>
-            )}
-
-            {activeRoute.total && (
-              <div style={{
-                display: 'inline-block', marginBottom: 10, padding: '3px 10px',
-                background: 'rgba(28,122,138,0.09)', borderRadius: 99,
-                fontSize: fz(11), fontWeight: 600, color: '#1C7A8A',
-              }}>
-                {activeRoute.total.minutes} min andando · {(activeRoute.total.meters / 1000).toFixed(1).replace('.', ',')} km · {activeRoute.stops.length} paradas
-              </div>
-            )}
-
-            {activeRoute.stops.map((stop, i) => (
-              <div key={`${stop.name}-${i}`} ref={i === routeStopIdx ? routeStopRef : null}>
-                <button onClick={() => onSelectStop?.(i)}
-                  title="Ver esta parada en el mapa"
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 10, width: '100%',
-                    padding: '5px 6px', borderRadius: 8, cursor: 'pointer',
-                    border: 'none', textAlign: 'left', font: 'inherit', color: 'inherit',
-                    background: i === routeStopIdx ? '#FBEFE5' : 'transparent',
-                  }}>
-                  <div style={{
-                    width: 22, height: 22, borderRadius: '50%',
-                    background: i === routeStopIdx ? '#145A66' : '#1C7A8A',
-                    color: '#fff', fontSize: fz(11), fontWeight: 700, flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    {i + 1}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontSize: fz(13), overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      fontWeight: i === routeStopIdx ? 700 : 400,
-                    }}>{stop.name}</div>
-                    {stop.hint && <div style={{ fontSize: fz(10.5), color: '#9ca3af' }}>{stop.hint}</div>}
-                  </div>
-                </button>
-                {/* Tramo hasta la siguiente parada */}
-                {activeRoute.legs?.[i] && (
-                  <div style={{
-                    fontSize: fz(10.5), color: '#8A7F70', padding: '0 0 2px 8px',
-                    borderLeft: '2px dotted rgba(28,122,138,0.4)', marginLeft: 10,
-                  }}>
-                    {activeRoute.legs[i].minutes} min · {activeRoute.legs[i].meters} m
-                  </div>
-                )}
-              </div>
-            ))}
-
-            {!activeRoute.geometry && (
-              <div style={{ fontSize: fz(10.5), color: '#D85A30', marginTop: 8 }}>
-                Ruta pendiente de calcular (curate_route.mjs) — el trazado del mapa es provisional.
-              </div>
-            )}
+        {/* En escritorio la tarjeta de ruta NO va aquí: flota sobre el mapa
+            (App.jsx la renderiza con `floating`); el panel se queda solo con
+            los controles y esta nota — sin ella el panel medio vacío se lee
+            como «falta algo» */}
+        {activeRoute && !isMobile && (
+          <div style={{ fontSize: fz(11.5), color: '#9ca3af', lineHeight: 1.6 }}>
+            Ruta activa. Los lugares y filtros volverán al salir de la ruta
+            (✕ en la tarjeta sobre el mapa).
           </div>
+        )}
+
+        {activeRoute && isMobile && (
+          <RouteCard
+            route={activeRoute}
+            stopIdx={routeStopIdx}
+            onSelectStop={onSelectStop}
+            onExit={onExitRoute}
+            isMobile={isMobile}
+            panelRef={routePanelRef}
+            stopRef={routeStopRef}
+            style={{ marginBottom: 16 }}
+          />
         )}
 
         {!activeRoute && totalCount > 0 && (

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Drawer } from 'vaul'
 import Map from './Map'
-import Sidebar, { ALL_SUBS } from './Sidebar'
+import Sidebar, { ALL_SUBS, RouteCard } from './Sidebar'
 import Tour from './Tour'
 import Legal from './Legal'
 import InstallButton from './InstallButton'
@@ -193,6 +193,7 @@ export default function App() {
       routeStopIdx={routeStopIdx}
       onSelectStop={toggleRouteStop}
       padBottom={isMobile ? Math.round(window.innerHeight * (typeof snap === 'number' ? snap : 0.55)) : 40}
+      routePadRight={isMobile ? 50 : 370}
     />
   )
 
@@ -245,7 +246,27 @@ export default function App() {
   return (
     <div style={{ ...shellStyle, display: 'flex', height: '100vh' }}>
       {sidebar}
-      {map}
+      {/* En escritorio la tarjeta de ruta flota sobre el mapa, arriba a la
+          derecha (patrón Google Maps); en móvil vive dentro del sheet */}
+      <div style={{ flex: 1, minWidth: 0, position: 'relative', display: 'flex' }}>
+        {map}
+        {activeRoute && (
+          <RouteCard
+            floating
+            route={activeRoute}
+            stopIdx={routeStopIdx}
+            onSelectStop={toggleRouteStop}
+            onExit={exitRoute}
+            isMobile={false}
+            style={{
+              position: 'absolute', top: 12, right: 12, zIndex: 1100,
+              width: 330, maxWidth: 'calc(100% - 24px)',
+              maxHeight: 'calc(100% - 24px)', overflowY: 'auto',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+            }}
+          />
+        )}
+      </div>
       <Tour />
       <InstallButton />
       {showLegal && <Legal onClose={() => setShowLegal(false)} />}

@@ -503,7 +503,7 @@ function makeIcon(item, isSelected) {
   })
 }
 
-export default function Map({ origin, isochrone, resources, selected, onSelect, activeRoute, routeStopIdx, onSelectStop, padBottom = 40 }) {
+export default function Map({ origin, isochrone, resources, selected, onSelect, activeRoute, routeStopIdx, onSelectStop, padBottom = 40, routePadRight = 50 }) {
   const mapRef = useRef(null)
   const leaflet = useRef(null)
   const isoLayer = useRef(null)
@@ -757,9 +757,11 @@ export default function Map({ origin, isochrone, resources, selected, onSelect, 
       routeLayer.current = group
       if (isNewRoute) {
         const b = L.latLngBounds(activeRoute.stops.map(s => [s.lat, s.lon]))
+        // En escritorio la tarjeta de ruta flota arriba a la derecha del mapa:
+        // routePadRight reserva ese hueco para que no tape el trazado
         const opts = {
           paddingTopLeft: [50, 50],
-          paddingBottomRight: [50, Math.max(50, padBottom)],
+          paddingBottomRight: [routePadRight, Math.max(50, padBottom)],
           maxZoom: 16,
         }
         // Saltos largos (otra región, p. ej. Tenerife → Torremolinos): ir
