@@ -86,8 +86,6 @@ export const REGIONS = [
       {
         zone: 'Las Palmas GC',
         cities: [
-          // PROPUESTAS pendientes de refinar a mano (regla: centros
-          // elegidos por Ibrahim, no salida del geocoder)
           { label: 'Vegueta',       lat: 28.1006, lon: -15.4136 },  // Catedral de Santa Ana
           { label: 'Triana',        lat: 28.1069, lon: -15.4172 },  // Calle Mayor de Triana
           { label: 'Mesa y López',  lat: 28.1290, lon: -15.4370 },  // zona comercial
@@ -106,7 +104,6 @@ export const REGIONS = [
       {
         zone: 'Sur',
         cities: [
-          // PROPUESTAS pendientes de refinar a mano
           { label: 'Playa del Inglés', lat: 27.7575, lon: -15.5684 },  // zona Yumbo / Av. de Tirajana
           { label: 'Maspalomas',       lat: 27.7344, lon: -15.5965 },  // Faro de Maspalomas
           { label: 'San Fernando',     lat: 27.7687, lon: -15.5852 },
