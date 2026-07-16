@@ -13,10 +13,12 @@ ENGINE = create_engine(os.environ["DATABASE_URL"].strip())
 
 # Regions to ingest. bbox mirrors api/_regions.js and src/regions.js —
 # keep the three in sync. The purge is scoped per-region by this bbox, so
-# regions must not overlap (Tenerife and Málaga are ~900 km apart).
+# regions must not overlap (Tenerife/Gran Canaria share latitudes but their
+# lon ranges are disjoint: -16.1 vs -15.85 leaves a 0.25° sea gap).
 REGIONS = [
-    dict(id="tenerife", lat_min=27.9,  lat_max=28.6,  lon_min=-16.9, lon_max=-16.1),
-    dict(id="malaga",   lat_min=36.55, lat_max=36.78, lon_min=-4.58, lon_max=-4.30),
+    dict(id="tenerife",     lat_min=27.9,  lat_max=28.6,  lon_min=-16.9,  lon_max=-16.1),
+    dict(id="malaga",       lat_min=36.55, lat_max=36.78, lon_min=-4.58,  lon_max=-4.30),
+    dict(id="gran-canaria", lat_min=27.72, lat_max=28.20, lon_min=-15.85, lon_max=-15.37),
 ]
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"

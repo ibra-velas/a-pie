@@ -79,6 +79,74 @@ export const REGIONS = [
       },
     ],
   },
+  {
+    id: 'gran-canaria',
+    label: 'Gran Canaria',
+    zones: [
+      {
+        zone: 'Las Palmas GC',
+        cities: [
+          // PROPUESTAS pendientes de refinar a mano (regla: centros
+          // elegidos por Ibrahim, no salida del geocoder)
+          { label: 'Vegueta',       lat: 28.1006, lon: -15.4136 },  // Catedral de Santa Ana
+          { label: 'Triana',        lat: 28.1069, lon: -15.4172 },  // Calle Mayor de Triana
+          { label: 'Mesa y López',  lat: 28.1290, lon: -15.4370 },  // zona comercial
+          { label: 'Las Canteras',  lat: 28.1394, lon: -15.4327 },  // paseo, tramo central
+        ],
+      },
+      {
+        zone: 'Este',
+        cities: [
+          { label: 'Telde',      lat: 28.0035, lon: -15.4140 },  // Basílica de San Juan Bautista
+          { label: 'Ingenio',    lat: 27.9340, lon: -15.4410 },  // Ayuntamiento
+          { label: 'Agüimes',    lat: 27.9069, lon: -15.4469 },  // Plaza del Rosario
+          { label: 'Vecindario', lat: 27.8451, lon: -15.4505 },  // Ayuntamiento de Santa Lucía
+        ],
+      },
+      {
+        zone: 'Sur',
+        cities: [
+          // PROPUESTAS pendientes de refinar a mano
+          { label: 'Playa del Inglés', lat: 27.7575, lon: -15.5684 },  // zona Yumbo / Av. de Tirajana
+          { label: 'Maspalomas',       lat: 27.7344, lon: -15.5965 },  // Faro de Maspalomas
+          { label: 'San Fernando',     lat: 27.7687, lon: -15.5852 },
+        ],
+      },
+      {
+        zone: 'Norte',
+        cities: [
+          { label: 'Arucas', lat: 28.1188, lon: -15.5232 },  // Iglesia de San Juan Bautista
+          { label: 'Teror',  lat: 28.0594, lon: -15.5479 },  // Basílica del Pino
+          { label: 'Firgas', lat: 28.1071, lon: -15.5632 },  // Paseo de Gran Canaria
+          { label: 'Moya',   lat: 28.1109, lon: -15.5841 },
+          { label: 'Gáldar', lat: 28.1452, lon: -15.6552 },  // Plaza de Santiago
+          { label: 'Agaete', lat: 28.1003, lon: -15.6997 },
+        ],
+      },
+      {
+        zone: 'Centro',
+        cities: [
+          { label: 'Santa Brígida',     lat: 28.0358, lon: -15.4974 },
+          { label: 'Vega de San Mateo', lat: 28.0097, lon: -15.5318 },
+          { label: 'Tejeda',            lat: 27.9951, lon: -15.6155 },
+        ],
+      },
+      {
+        zone: 'Suroeste',
+        cities: [
+          { label: 'Arguineguín',     lat: 27.7608, lon: -15.6806 },
+          { label: 'Puerto Rico',     lat: 27.7851, lon: -15.7133 },  // playa
+          { label: 'Puerto de Mogán', lat: 27.8175, lon: -15.7652 },  // puerto
+        ],
+      },
+      {
+        zone: 'Oeste',
+        cities: [
+          { label: 'La Aldea', lat: 27.9821, lon: -15.7798 },  // La Aldea de San Nicolás
+        ],
+      },
+    ],
+  },
 ]
 
 // Default region the app opens on (La Laguna lives here).

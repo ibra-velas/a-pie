@@ -13,6 +13,11 @@ export const REGIONS = [
     geocodeHint: 'Málaga, España',
     bbox: { latMin: 36.55, latMax: 36.78, lonMin: -4.58, lonMax: -4.30 },
   },
+  {
+    id: 'gran-canaria',
+    geocodeHint: 'Gran Canaria, España',
+    bbox: { latMin: 27.72, latMax: 28.20, lonMin: -15.85, lonMax: -15.37 },
+  },
 ]
 
 export const regionById = id => REGIONS.find(r => r.id === id)
