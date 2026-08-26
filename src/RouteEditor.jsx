@@ -186,7 +186,7 @@ export default function RouteEditor({ onExit }) {
   // Mapa: init una vez
   useEffect(() => {
     const m = L.map(mapRef.current, { maxZoom: 20 })
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png?key=' + import.meta.env.VITE_CARTO_API_KEY, {
       attribution: '© CARTO · Datos: © OpenStreetMap', maxZoom: 20,
     }).addTo(m)
     const stops = draftRef.current.stops
