@@ -3,6 +3,13 @@ import { createClient } from '@supabase/supabase-js'
 import { fetchIsochrone } from './_isochrone-fetch.js'
 import { validateQuery } from './_validate.js'
 
+const r = await fetch(orsUrl, options);
+if (!r.ok) {
+  const body = await r.text();
+  console.error("ORS error", r.status, body);
+  return res.status(r.status).json({ error: body });
+}
+
 const supabase = createClient(
   process.env.SUPABASE_REST_URL || process.env.SUPABASE_URL,
   process.env.SUPABASE_KEY
