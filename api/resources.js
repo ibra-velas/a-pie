@@ -18,7 +18,9 @@ export default async function handler(req, res) {
     const iso = await fetchIsochrone(lat, lon, minutes)
     polygon = iso.polygon
   } catch (e) {
-    return res.status(502).json({ error: 'Error calculando isócrona', detail: e.message })
+	console.error('Isochrone error:', e.status, e.message)
+	const status = e.status === 429 ? 429 : 502
+	return res.status(502).json({ error: 'Error calculando isócrona', detail: e.message })
   }
 
   const { data, error } = await supabase.rpc('resources_within', {
