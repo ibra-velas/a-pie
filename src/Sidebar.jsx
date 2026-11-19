@@ -535,8 +535,8 @@ export default function Sidebar({
             value={address}
             onChange={e => setAddress(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && onSearch(address, activeRegion)}
-            placeholder="Tu dirección..."
-            title={`Escribe una dirección en ${region.label} y pulsa Enter`}
+            placeholder="Dirección o coordenadas..."
+            title={`Escribe una dirección en ${region.label} o coordenadas (ej. 28.4869, -16.3182) y pulsa Enter`}
             style={{ flex: 1, padding: '0 12px', border: '1px solid #DCD5C9', borderRadius: 12, minWidth: 0,
               // 16px on mobile: anything smaller triggers iOS auto-zoom on focus
               fontSize: isMobile ? 16 : 13 }}

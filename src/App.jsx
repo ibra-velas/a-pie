@@ -6,6 +6,7 @@ import Tour from './Tour'
 import Legal from './Legal'
 import InstallButton from './InstallButton'
 import useIsMobile from './useIsMobile'
+import { parseCoords } from '../api/_coords.js'
 
 // Bottom-sheet heights (fraction of viewport): peek / half / expanded
 const SNAP_POINTS = [0.22, 0.55, 0.93]
@@ -93,13 +94,17 @@ export default function App() {
   )
 
   async function search(address, region) {
+    const coords = parseCoords(address)
+    if (coords) {
+      await locate(coords.lat, coords.lon)
+      return
+    }
     setLoading(true)
     setError(null)
     try {
       const geoRes = await fetch(`/api/geocode?q=${encodeURIComponent(address)}${region ? `&region=${region}` : ''}`)
       if (!geoRes.ok) { setError('Dirección no encontrada'); setLoading(false); return }
       const { lat, lon } = await geoRes.json()
-      setOrigin({ lat, lon })
       await fetchResources(lat, lon, minutes)
     } catch {
       setError('Error de conexión')
@@ -108,7 +113,6 @@ export default function App() {
   }
 
   async function locate(lat, lon) {
-    setOrigin({ lat, lon })
     await fetchResources(lat, lon, minutes)
   }
 
@@ -134,6 +138,7 @@ export default function App() {
         return
       }
       const data = await res.json()
+      setOrigin(prev => (prev && prev.lat === lat && prev.lon === lon ? prev : { lat, lon }))
       setIsochrone(data.polygon)
       setResources(data.by_subcategory)
       setSelected(null)

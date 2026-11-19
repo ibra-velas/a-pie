@@ -1,8 +1,19 @@
 import { REGIONS, regionById } from './_regions.js'
+import { parseCoords } from './_coords.js'
 
 export default async function handler(req, res) {
   const { q, region } = req.query
   if (!q) return res.status(400).json({ error: 'Missing q parameter' })
+
+  // Direct coordinates bypass Nominatim (appending geocodeHint breaks its parser)
+  const coords = parseCoords(q)
+  if (coords) {
+    return res.json({
+      lat: coords.lat,
+      lon: coords.lon,
+      display_name: `${coords.lat}, ${coords.lon}`,
+    })
+  }
 
   // Bias + hard-bound the search to the requested region (default: first)
   const r = regionById(region) || REGIONS[0]
